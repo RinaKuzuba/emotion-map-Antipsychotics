@@ -235,7 +235,6 @@
         }
         to {
             opacity: 1;
-            transform: scale(1);
         }
     }
     
@@ -267,12 +266,30 @@
     .legend .leg-high{
         background:#ffe3e3;
     }
+
+    .disclaimer {
+        max-width:920px;
+        margin:12px auto 0;
+        font-size:11px;
+        color:#777;
+        line-height:1.6;
+    }
+    .disclaimer strong{
+        font-size:11px;
+    }
 </style>
 </head>
 
 <body>
 <div class="container">
 <h2>ラッセル感情円環 − 非定型抗精神病薬マッピング</h2>
+
+<div class="info-box" style="margin-top:0; font-size:11px;">
+    このアプリは、「どのような情動・状態像のときに、どの非定型抗精神病薬が処方されることが“多いか”」を
+    ラッセルの Valence×Arousal モデル上にイメージとして可視化したものです。<br>
+    受容体作用やエビデンスを厳密に数値化したものではなく、臨床でよく見られる典型的な状態像を
+    概念的に整理した教育用ツール（オモチャ）です。
+</div>
 
 <div class="drug-selector">
     <button class="drug-btn active" onclick="showDrugTargets(event,'clear')">クリア</button>
@@ -315,14 +332,21 @@
 </div>
 </div>
 
+<div class="disclaimer">
+    <strong>【重要な注意】</strong><br>
+    ・この可視化は「どのような状態の方にこの薬剤が処方されることが多いか」をイメージとして示した概念モデルです。<br>
+    ・薬理作用・診断・治療効果を定量的に保証するものではなく、臨床判断や処方の根拠として使用することはできません。<br>
+    ・実際の診断・治療方針の決定は、必ず主治医などの医療専門職による個別評価に基づいて行ってください。<br>
+    ・ご自身や身近な方の症状に心配がある場合は、この図で自己判断せず、医療機関・相談窓口にご相談ください。
+</div>
+
 <script>
 const centerX = 300;
 const centerY = 300;
 const radius = 250;
-const mapOffsetX = 50;  // 円の左端からの距離
-const mapOffsetY = 50;  // 円の上端からの距離
+const mapOffsetX = 50;
+const mapOffsetY = 50;
 
-// 配置済みピンの位置を記録
 let placedPins = [];
 let placedBoxes = [];
 
@@ -350,7 +374,7 @@ const emotionsVA = [
  {ja:"静かな", val:35, aro:-20}
 ];
 
-// 薬剤データ（修正済み）
+// 薬剤データ
 const drugTargets = {
     aripiprazole: {
         name: "アリピプラゾール（エビリファイ）",
@@ -361,11 +385,11 @@ const drugTargets = {
             {name:"無為", val:-45, aro:-60, type:"other"},
             {name:"感情不安定", val:-20, aro:60, type:"emotional"},
             {name:"攻撃衝動", val:-70, aro:80, type:"emotional"},
-            {name:"無関心", val:-40, aro:-50, type:"other"},          // aro を -50 に下げる
+            {name:"無関心", val:-40, aro:-50, type:"other"},
             {name:"思考混乱", val:-50, aro:55, type:"other"},
             {name:"焦燥感", val:-55, aro:65, type:"emotional"},
             {name:"アンヘドニア", val:-70, aro:-20, type:"emotional"},
-            {name:"注意散漫", val:-35, aro:40, type:"other"}          // aro を 40 に上げる
+            {name:"注意散漫", val:-35, aro:40, type:"other"}
         ]
     },
     olanzapine: {
@@ -374,13 +398,13 @@ const drugTargets = {
         targets: [
             {name:"激しい興奮", val:-70, aro:85, type:"emotional"},
             {name:"被害妄想", val:-75, aro:70, type:"other"},
-            {name:"多弁・多動", val:15, aro:85, type:"other"},        // val を +15 に
+            {name:"多弁・多動", val:15, aro:85, type:"other"},
             {name:"絶望感", val:-85, aro:-25, type:"emotional"},
             {name:"過覚醒", val:-50, aro:80, type:"emotional"},
             {name:"思考解体", val:-60, aro:60, type:"other"},
             {name:"パニック", val:-70, aro:75, type:"emotional"},
             {name:"激しい焦燥", val:-65, aro:80, type:"emotional"},
-            {name:"感情枯渇", val:-60, aro:-40, type:"other"},        // aro を -40 に
+            {name:"感情枯渇", val:-60, aro:-40, type:"other"},
             {name:"強い緊張", val:-55, aro:70, type:"emotional"}
         ]
     },
@@ -388,13 +412,13 @@ const drugTargets = {
         name: "クエチアピン（セロクエル）",
         color: "#FCC419",
         targets: [
-            {name:"強い不安", val:-55, aro:60, type:"emotional"},     // aro 45→60
+            {name:"強い不安", val:-55, aro:60, type:"emotional"},
             {name:"希死念慮", val:-90, aro:-10, type:"highrisk"},
-            {name:"混合状態", val:-70, aro:60, type:"emotional"},     // aro 40→60
+            {name:"混合状態", val:-70, aro:60, type:"emotional"},
             {name:"過敏反応", val:-50, aro:70, type:"emotional"},
             {name:"感情爆発", val:-40, aro:80, type:"emotional"},
             {name:"夜間せん妄", val:-60, aro:70, type:"other"},
-            {name:"自責感", val:-80, aro:40, type:"emotional"},       // aro 20→40
+            {name:"自責感", val:-80, aro:40, type:"emotional"},
             {name:"虚無感", val:-70, aro:-30, type:"emotional"},
             {name:"心身硬直", val:-50, aro:55, type:"other"},
             {name:"焦燥不穏", val:-60, aro:70, type:"emotional"}
@@ -438,7 +462,7 @@ const drugTargets = {
         targets: [
             {name:"感情鈍麻", val:-35, aro:-25, type:"other"},
             {name:"意欲枯渇", val:-45, aro:-40, type:"other"},
-            {name:"対人回避", val:-50, aro:30, type:"emotional"},      // aro 15→30
+            {name:"対人回避", val:-50, aro:30, type:"emotional"},
             {name:"将来不安", val:-55, aro:35, type:"emotional"},
             {name:"思考停滞", val:-35, aro:-10, type:"other"},
             {name:"虚しさ", val:-65, aro:-20, type:"emotional"},
@@ -454,7 +478,7 @@ const drugTargets = {
         targets: [
             {name:"深い抑うつ", val:-80, aro:-25, type:"emotional"},
             {name:"絶望感", val:-85, aro:-20, type:"emotional"},
-            {name:"判断力低下", val:-55, aro:20, type:"emotional"},   // aro 40→20
+            {name:"判断力低下", val:-55, aro:20, type:"emotional"},
             {name:"孤立感", val:-60, aro:-30, type:"emotional"},
             {name:"アンヘドニア", val:-75, aro:-20, type:"emotional"},
             {name:"無価値感", val:-80, aro:-10, type:"emotional"},
@@ -491,7 +515,7 @@ const drugTargets = {
             {name:"反芻思考", val:-50, aro:25, type:"other"},
             {name:"軽度妄想", val:-45, aro:35, type:"other"},
             {name:"ソワソワ感", val:-45, aro:55, type:"emotional"},
-            {name:"社交不安", val:-50, aro:35, type:"emotional"},      // aro 20→35
+            {name:"社交不安", val:-50, aro:35, type:"emotional"},
             {name:"睡眠恐怖", val:-55, aro:45, type:"emotional"},
             {name:"感情の乱れ", val:-25, aro:25, type:"emotional"}
         ]
@@ -584,7 +608,7 @@ function adjustPosition(x, y, minDistance = 35) {
 // 円外ボックスの最適位置を計算
 function findOptimalBoxPosition(origX, origY, boxWidth = 100, boxHeight = 30) {
     const angle = Math.atan2(origY - centerY, origX - centerX);
-    const margin = 320;  // 円の半径250 + 70pxのマージン
+    const margin = 320;
     let boxX = centerX + Math.cos(angle) * margin;
     let boxY = centerY + Math.sin(angle) * margin;
     
@@ -621,7 +645,7 @@ function findOptimalBoxPosition(origX, origY, boxWidth = 100, boxHeight = 30) {
     return {x: boxX, y: boxY};
 }
 
-// 円内ピン（emotional）を追加
+// 円内ピンを追加
 function addEmotionalPin(symptom, color, delay = 0, index = 0) {
     setTimeout(() => {
         const circle = document.querySelector(".circle-area");
@@ -648,14 +672,12 @@ function addEmotionalPin(symptom, color, delay = 0, index = 0) {
     }, delay);
 }
 
-// 円外ボックス（other）を追加 - 最短距離配置
+// 円外ボックスを追加
 function addOtherBox(symptom, color, delay = 0) {
     setTimeout(() => {
         const map = document.getElementById("emotion-map");
-        
         const origX = centerX + (symptom.val/100)*radius;
         const origY = centerY - (symptom.aro/100)*radius;
-        
         const boxPos = findOptimalBoxPosition(origX, origY);
         
         const box = document.createElement("div");
@@ -692,7 +714,7 @@ function addOtherBox(symptom, color, delay = 0) {
     }, delay);
 }
 
-// 高リスク症状を下部に表示（「1点では表しきれない」旨を追記）
+// 高リスク症状
 let highRiskCount = 0;
 function addHighRiskSymptom(symptom, color, delay = 0) {
     setTimeout(() => {
@@ -734,7 +756,7 @@ function clearPins() {
     highRiskCount = 0;
 }
 
-// 薬剤ターゲットを表示
+// 薬剤ターゲット表示
 function showDrugTargets(evt, drugKey) {
     document.querySelectorAll('.drug-btn').forEach(btn => {
         btn.classList.remove('active');
