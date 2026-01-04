@@ -202,7 +202,7 @@
         align-items:flex-start;
         gap:6px;
         box-shadow:0 4px 10px rgba(0,0,0,.25);
-        max-width:340px;
+        max-width:380px;
         text-align:left;
         z-index: 500;
     }
@@ -303,11 +303,14 @@
 
 <div class="info-box" id="info-box">
     薬剤を選択すると、その薬が主にアプローチする状態がマッピングされます。<br>
-    <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
+    <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります。</strong><br>
     <div class="legend">
         <span class="leg-emotional">● 情動状態（円内）</span>
         <span class="leg-other">■ 認知・行動症状（円外・最短距離配置）</span>
-        <span class="leg-high">⚠ 高リスク状態（下部）</span>
+        <span class="leg-high">⚠ 高リスク状態（下部・低覚醒型と高覚醒型など複数の顔つきがあり、位置は一例）</span>
+    </div>
+    <div style="margin-top:6px; font-size:11px; color:#888;">
+        ※各位置は典型的な情動トーンのイメージであり、実際の患者さんの体験や診断を置き換えるものではありません。
     </div>
 </div>
 </div>
@@ -347,7 +350,7 @@ const emotionsVA = [
  {ja:"静かな", val:35, aro:-20}
 ];
 
-// 薬剤データ（既存のものを使用）
+// 薬剤データ（修正済み）
 const drugTargets = {
     aripiprazole: {
         name: "アリピプラゾール（エビリファイ）",
@@ -358,11 +361,11 @@ const drugTargets = {
             {name:"無為", val:-45, aro:-60, type:"other"},
             {name:"感情不安定", val:-20, aro:60, type:"emotional"},
             {name:"攻撃衝動", val:-70, aro:80, type:"emotional"},
-            {name:"無関心", val:-40, aro:-40, type:"other"},
+            {name:"無関心", val:-40, aro:-50, type:"other"},          // aro を -50 に下げる
             {name:"思考混乱", val:-50, aro:55, type:"other"},
             {name:"焦燥感", val:-55, aro:65, type:"emotional"},
             {name:"アンヘドニア", val:-70, aro:-20, type:"emotional"},
-            {name:"注意散漫", val:-35, aro:20, type:"other"}
+            {name:"注意散漫", val:-35, aro:40, type:"other"}          // aro を 40 に上げる
         ]
     },
     olanzapine: {
@@ -371,13 +374,13 @@ const drugTargets = {
         targets: [
             {name:"激しい興奮", val:-70, aro:85, type:"emotional"},
             {name:"被害妄想", val:-75, aro:70, type:"other"},
-            {name:"多弁・多動", val:-20, aro:85, type:"other"},
+            {name:"多弁・多動", val:15, aro:85, type:"other"},        // val を +15 に
             {name:"絶望感", val:-85, aro:-25, type:"emotional"},
             {name:"過覚醒", val:-50, aro:80, type:"emotional"},
             {name:"思考解体", val:-60, aro:60, type:"other"},
             {name:"パニック", val:-70, aro:75, type:"emotional"},
             {name:"激しい焦燥", val:-65, aro:80, type:"emotional"},
-            {name:"感情枯渇", val:-60, aro:-25, type:"other"},
+            {name:"感情枯渇", val:-60, aro:-40, type:"other"},        // aro を -40 に
             {name:"強い緊張", val:-55, aro:70, type:"emotional"}
         ]
     },
@@ -385,13 +388,13 @@ const drugTargets = {
         name: "クエチアピン（セロクエル）",
         color: "#FCC419",
         targets: [
-            {name:"強い不安", val:-55, aro:45, type:"emotional"},
+            {name:"強い不安", val:-55, aro:60, type:"emotional"},     // aro 45→60
             {name:"希死念慮", val:-90, aro:-10, type:"highrisk"},
-            {name:"混合状態", val:-70, aro:40, type:"emotional"},
+            {name:"混合状態", val:-70, aro:60, type:"emotional"},     // aro 40→60
             {name:"過敏反応", val:-50, aro:70, type:"emotional"},
             {name:"感情爆発", val:-40, aro:80, type:"emotional"},
             {name:"夜間せん妄", val:-60, aro:70, type:"other"},
-            {name:"自責感", val:-80, aro:20, type:"emotional"},
+            {name:"自責感", val:-80, aro:40, type:"emotional"},       // aro 20→40
             {name:"虚無感", val:-70, aro:-30, type:"emotional"},
             {name:"心身硬直", val:-50, aro:55, type:"other"},
             {name:"焦燥不穏", val:-60, aro:70, type:"emotional"}
@@ -435,7 +438,7 @@ const drugTargets = {
         targets: [
             {name:"感情鈍麻", val:-35, aro:-25, type:"other"},
             {name:"意欲枯渇", val:-45, aro:-40, type:"other"},
-            {name:"対人回避", val:-50, aro:15, type:"emotional"},
+            {name:"対人回避", val:-50, aro:30, type:"emotional"},      // aro 15→30
             {name:"将来不安", val:-55, aro:35, type:"emotional"},
             {name:"思考停滞", val:-35, aro:-10, type:"other"},
             {name:"虚しさ", val:-65, aro:-20, type:"emotional"},
@@ -451,7 +454,7 @@ const drugTargets = {
         targets: [
             {name:"深い抑うつ", val:-80, aro:-25, type:"emotional"},
             {name:"絶望感", val:-85, aro:-20, type:"emotional"},
-            {name:"判断力低下", val:-55, aro:40, type:"emotional"},
+            {name:"判断力低下", val:-55, aro:20, type:"emotional"},   // aro 40→20
             {name:"孤立感", val:-60, aro:-30, type:"emotional"},
             {name:"アンヘドニア", val:-75, aro:-20, type:"emotional"},
             {name:"無価値感", val:-80, aro:-10, type:"emotional"},
@@ -488,7 +491,7 @@ const drugTargets = {
             {name:"反芻思考", val:-50, aro:25, type:"other"},
             {name:"軽度妄想", val:-45, aro:35, type:"other"},
             {name:"ソワソワ感", val:-45, aro:55, type:"emotional"},
-            {name:"社交不安", val:-50, aro:20, type:"emotional"},
+            {name:"社交不安", val:-50, aro:35, type:"emotional"},      // aro 20→35
             {name:"睡眠恐怖", val:-55, aro:45, type:"emotional"},
             {name:"感情の乱れ", val:-25, aro:25, type:"emotional"}
         ]
@@ -580,23 +583,17 @@ function adjustPosition(x, y, minDistance = 35) {
 
 // 円外ボックスの最適位置を計算
 function findOptimalBoxPosition(origX, origY, boxWidth = 100, boxHeight = 30) {
-    // 円の中心からの角度を計算
     const angle = Math.atan2(origY - centerY, origX - centerX);
-    
-    // 円の外側に配置（半径 + マージン）
     const margin = 320;  // 円の半径250 + 70pxのマージン
     let boxX = centerX + Math.cos(angle) * margin;
     let boxY = centerY + Math.sin(angle) * margin;
     
-    // マップ全体での座標に変換
     boxX += mapOffsetX;
     boxY += mapOffsetY;
     
-    // ボックスの中心位置を調整（ボックスの左上が基準のため）
     boxX -= boxWidth / 2;
     boxY -= boxHeight / 2;
     
-    // 既存のボックスとの重なりをチェック
     let attempts = 0;
     while (attempts < 8) {
         let overlap = false;
@@ -613,7 +610,6 @@ function findOptimalBoxPosition(origX, origY, boxWidth = 100, boxHeight = 30) {
             break;
         }
         
-        // 重なっている場合は少しずらす
         const offsetAngle = angle + (attempts * 0.3);
         const offsetRadius = margin + (attempts * 15);
         boxX = centerX + Math.cos(offsetAngle) * offsetRadius + mapOffsetX - boxWidth/2;
@@ -657,14 +653,11 @@ function addOtherBox(symptom, color, delay = 0) {
     setTimeout(() => {
         const map = document.getElementById("emotion-map");
         
-        // 元の位置（円内）を計算
         const origX = centerX + (symptom.val/100)*radius;
         const origY = centerY - (symptom.aro/100)*radius;
         
-        // 最適な円外位置を計算
         const boxPos = findOptimalBoxPosition(origX, origY);
         
-        // ボックスを作成
         const box = document.createElement("div");
         box.className = "other-box";
         box.style.left = `${boxPos.x}px`;
@@ -675,14 +668,12 @@ function addOtherBox(symptom, color, delay = 0) {
         
         map.appendChild(box);
         
-        // 接続線を描画
         setTimeout(() => {
             const line = document.createElement("div");
             line.className = "connection-line dashed";
             
-            // ボックスの中心座標を計算
-            const boxCenterX = boxPos.x + 50 - mapOffsetX;  // ボックス幅の半分
-            const boxCenterY = boxPos.y + 15 - mapOffsetY;  // ボックス高さの半分
+            const boxCenterX = boxPos.x + 50 - mapOffsetX;
+            const boxCenterY = boxPos.y + 15 - mapOffsetY;
             
             const dx = boxCenterX - origX;
             const dy = boxCenterY - origY;
@@ -701,21 +692,25 @@ function addOtherBox(symptom, color, delay = 0) {
     }, delay);
 }
 
-// 高リスク症状を下部に表示
+// 高リスク症状を下部に表示（「1点では表しきれない」旨を追記）
 let highRiskCount = 0;
 function addHighRiskSymptom(symptom, color, delay = 0) {
     setTimeout(() => {
         const map = document.getElementById("emotion-map");
         const box = document.createElement("div");
         box.className = "highrisk-box";
-        box.style.bottom = `${10 + highRiskCount * 50}px`;
+        box.style.bottom = `${10 + highRiskCount * 60}px`;
         highRiskCount++;
 
         box.innerHTML = `
             <div class="highrisk-icon">⚠</div>
             <div class="highrisk-text">
                 <strong>${symptom.name}</strong>
-                <span>高リスク状態</span>
+                <span>
+                    高リスク状態です。静かに沈んだ状態と、激しく興奮した状態など、
+                    Valence×Arousal の 1 点では表しきれない複数のパターンがあり得ます。
+                    実際の評価・対応は、必ず主治医などの医療者と相談してください。
+                </span>
             </div>
         `;
         map.appendChild(box);
@@ -755,11 +750,14 @@ function showDrugTargets(evt, drugKey) {
     if (drugKey === 'clear') {
         infoBox.innerHTML = `
             薬剤を選択すると、その薬が主にアプローチする状態がマッピングされます。<br>
-            <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
+            <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります。</strong><br>
             <div class="legend">
                 <span class="leg-emotional">● 情動状態（円内）</span>
                 <span class="leg-other">■ 認知・行動症状（円外・最短距離配置）</span>
-                <span class="leg-high">⚠ 高リスク状態（下部）</span>
+                <span class="leg-high">⚠ 高リスク状態（下部・低覚醒型と高覚醒型など複数の顔つきがあり、位置は一例）</span>
+            </div>
+            <div style="margin-top:6px; font-size:11px; color:#888;">
+                ※各位置は典型的な情動トーンのイメージであり、実際の患者さんの体験や診断を置き換えるものではありません。
             </div>
         `;
         return;
@@ -769,11 +767,16 @@ function showDrugTargets(evt, drugKey) {
     if (drug) {
         infoBox.innerHTML = `
             <strong>${drug.name}</strong> が主にアプローチする状態を表示中<br>
-            <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
+            <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります。</strong><br>
             <div class="legend">
                 <span class="leg-emotional">● 情動状態（円内）</span>
                 <span class="leg-other">■ 認知・行動症状（円外・最短距離配置）</span>
-                <span class="leg-high">⚠ 高リスク状態（下部）</span>
+                <span class="leg-high">⚠ 高リスク状態（下部・低覚醒型と高覚醒型など複数の顔つきがあり、位置は一例）</span>
+            </div>
+            <div style="margin-top:6px; font-size:11px; color:#888;">
+                ※マッピングは教育用の概念モデルであり、治療方針の決定や診断そのものを示すものではありません。<br>
+                ※希死念慮・自殺念慮・激しい暴力などの高リスク状態は、静かな低覚醒型と激しく興奮した高覚醒型など、
+                  1 点の座標では表しきれない多様なパターンが存在します。
             </div>
         `;
         
