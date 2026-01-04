@@ -32,6 +32,7 @@
     
     .drug-btn:hover {
         background: #f0f0ff;
+        transform: translateY(-2px);
     }
     
     .drug-btn.active {
@@ -76,12 +77,25 @@
         transform: translate(-50%, -100%);
         cursor: pointer;
         animation: dropIn 0.5s ease-out;
-        z-index: 100;
+        transition: z-index 0.3s, transform 0.3s;
+    }
+    
+    .symptom-pin:hover {
+        z-index: 1000 !important;
+        transform: translate(-50%, -100%) scale(1.1);
+    }
+    
+    .symptom-pin:hover .symptom-label {
+        z-index: 1001 !important;
+        background: #fffae0;
+        font-size: 12px;
+        padding: 5px 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     
     .pin-head {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
         margin: 0 auto 5px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.3);
@@ -92,33 +106,45 @@
     .pin-head::after {
         content: '';
         position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 6px;
-        height: 6px;
+        top: 2px;
+        left: 2px;
+        width: 5px;
+        height: 5px;
         background: rgba(255,255,255,0.7);
         border-radius: 50%;
     }
     
     .pin-stick {
         width: 2px;
-        height: 18px;
+        height: 15px;
         background: #333;
         margin: 0 auto;
     }
     
     .symptom-label {
         position: absolute;
-        bottom: -26px;
+        bottom: -24px;
         left: 50%;
         transform: translateX(-50%);
         white-space: nowrap;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: bold;
         background: white;
-        padding: 3px 8px;
-        border-radius: 12px;
+        padding: 2px 6px;
+        border-radius: 10px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        pointer-events: none;
+        transition: all 0.3s;
+    }
+
+    /* 接続線 */
+    .connection-line {
+        position: absolute;
+        height: 1px;
+        background: rgba(0,0,0,0.2);
+        transform-origin: left center;
+        pointer-events: none;
+        z-index: 1;
     }
 
     /* 種類別スタイル */
@@ -128,10 +154,9 @@
     .symptom-pin.other .symptom-label {
         border: 1px dashed rgba(0,0,0,0.2);
         font-weight: normal;
-        font-size: 10px;
     }
 
-    /* 高リスク症状：⚠ アイコン、円外に配置 */
+    /* 高リスク症状 */
     .highrisk-box {
         position:absolute;
         left:50%;
@@ -149,6 +174,7 @@
         box-shadow:0 4px 10px rgba(0,0,0,.25);
         max-width:340px;
         text-align:left;
+        z-index: 500;
     }
     .highrisk-icon{
         font-size:16px;
@@ -234,13 +260,11 @@
 
 <div class="info-box" id="info-box">
     薬剤を選択すると、その薬が主にアプローチする「情動の状態」が感情円環上にマッピングされます。<br>
+    <strong>ヒント：ピンにマウスを重ねると詳細が見やすくなります</strong><br>
     <div class="legend">
-        <span class="leg-emotional">● 情動トーンに近い状態（円内ピン）</span><br>
-        <span class="leg-other">■ 認知・行動・持続性などを含む状態（情動トーンの一例として円内に表示）</span><br>
-        <span class="leg-high">⚠ 高リスク状態（Valence×Arousalで単純に表せないため円外に表示）</span>
-    </div>
-    <div style="margin-top:6px; font-size:11px; color:#888;">
-        ※各位置は典型的な情動トーンのイメージであり、実際の患者さんの体験や診断を置き換えるものではありません。
+        <span class="leg-emotional">● 情動トーンに近い状態</span>
+        <span class="leg-other">■ 認知・行動・持続性などを含む状態</span>
+        <span class="leg-high">⚠ 高リスク状態</span>
     </div>
 </div>
 </div>
@@ -250,7 +274,10 @@ const centerX = 300;
 const centerY = 300;
 const radius = 250;
 
-// ▼ 背景の感情配置（薄く表示）
+// 配置済みピンの位置を記録
+let placedPins = [];
+
+// 背景の感情配置
 const emotionsVA = [
  {ja:"覚醒した", val:10, aro:90},
  {ja:"驚いた", val:5, aro:85},
@@ -262,7 +289,6 @@ const emotionsVA = [
  {ja:"平穏な", val:55, aro:10},
  {ja:"満足した", val:65, aro:5},
  {ja:"くつろいだ", val:45, aro:-10},
- {ja:"満たされた", val:60, aro:-5},
  {ja:"リラックスした", val:40, aro:-25},
  {ja:"穏やかな", val:30, aro:-35},
  {ja:"安らかな", val:25, aro:-45},
@@ -272,205 +298,196 @@ const emotionsVA = [
  {ja:"陰気な", val:-50, aro:-40},
  {ja:"悲しい", val:-70, aro:-35},
  {ja:"苦痛な", val:-75, aro:-10},
- {ja:"腹の立った", val:-60, aro:30},
  {ja:"怒った", val:-70, aro:55},
- {ja:"ぎょっとした", val:-40, aro:75},
  {ja:"怖い", val:-55, aro:70},
- {ja:"張り詰めた", val:-35, aro:65},
  {ja:"心配な", val:-45, aro:40},
- {ja:"もどかしい", val:-55, aro:25},
  {ja:"動揺した", val:-50, aro:55},
- {ja:"ぐったりした", val:-35, aro:-60},
  {ja:"疲労した", val:-20, aro:-50},
  {ja:"退屈な", val:-40, aro:-30},
- {ja:"静かな", val:35, aro:-20},
- {ja:"受動的な", val:0, aro:-20}
+ {ja:"静かな", val:35, aro:-20}
 ];
 
-// ▼ 薬剤ごとの「アプローチする状態」
-// type: "emotional"（情動トーンに近い）
-//       "other"    （認知・行動・持続性などを含む）
-//       "highrisk"（高リスク状態：円外表示）
+// 薬剤データ（既存のものを短縮表示）
 const drugTargets = {
     aripiprazole: {
         name: "アリピプラゾール（エビリファイ）",
         color: "#15AABF",
         targets: [
-            {name:"感情の極端な高揚（躁状態）", val:70, aro:85, type:"emotional"},
-            {name:"抑えきれないイライラ（易刺激性）", val:-60, aro:70, type:"emotional"},
-            {name:"何もやる気が起きない「無為」", val:-45, aro:-60, type:"other"},
-            {name:"感情の起伏が激しい不安定さ", val:-20, aro:60, type:"emotional"},
-            {name:"周囲への攻撃的な衝動", val:-70, aro:80, type:"emotional"},
-            {name:"物事への無関心", val:-40, aro:-40, type:"other"},
-            {name:"思考がまとまらない焦り", val:-50, aro:55, type:"other"},
-            {name:"緊張によるソワソワ感（焦燥）", val:-55, aro:65, type:"emotional"},
-            {name:"喜びを感じにくい状態（アンヘドニア）", val:-70, aro:-20, type:"emotional"},
-            {name:"集中力が続かない散漫さ", val:-35, aro:20, type:"other"}
+            {name:"躁状態", val:70, aro:85, type:"emotional"},
+            {name:"易刺激性", val:-60, aro:70, type:"emotional"},
+            {name:"無為", val:-45, aro:-60, type:"other"},
+            {name:"感情不安定", val:-20, aro:60, type:"emotional"},
+            {name:"攻撃衝動", val:-70, aro:80, type:"emotional"},
+            {name:"無関心", val:-40, aro:-40, type:"other"},
+            {name:"思考混乱", val:-50, aro:55, type:"other"},
+            {name:"焦燥感", val:-55, aro:65, type:"emotional"},
+            {name:"アンヘドニア", val:-70, aro:-20, type:"emotional"},
+            {name:"注意散漫", val:-35, aro:20, type:"other"}
         ]
     },
     olanzapine: {
         name: "オランザピン（ジプレキサ）",
         color: "#F08C00",
         targets: [
-            {name:"激しい興奮と怒り", val:-70, aro:85, type:"emotional"},
-            {name:"恐怖を伴う強い被害妄想", val:-75, aro:70, type:"other"},
-            {name:"制御不能な多弁・多動", val:-20, aro:85, type:"other"},
-            {name:"深刻な絶望感（うつ状態）", val:-85, aro:-25, type:"emotional"},
-            {name:"神経過敏な過覚醒", val:-50, aro:80, type:"emotional"},
-            {name:"思考がバラバラになる混乱", val:-60, aro:60, type:"other"},
-            {name:"強い不安によるパニック", val:-70, aro:75, type:"emotional"},
-            {name:"激しい焦燥感（居ても立っても居られない）", val:-65, aro:80, type:"emotional"},
-            {name:"感情の深刻な枯渇", val:-60, aro:-25, type:"other"},
-            {name:"睡眠を妨げるほどの強い緊張", val:-55, aro:70, type:"emotional"}
+            {name:"激しい興奮", val:-70, aro:85, type:"emotional"},
+            {name:"被害妄想", val:-75, aro:70, type:"other"},
+            {name:"多弁・多動", val:-20, aro:85, type:"other"},
+            {name:"絶望感", val:-85, aro:-25, type:"emotional"},
+            {name:"過覚醒", val:-50, aro:80, type:"emotional"},
+            {name:"思考解体", val:-60, aro:60, type:"other"},
+            {name:"パニック", val:-70, aro:75, type:"emotional"},
+            {name:"激しい焦燥", val:-65, aro:80, type:"emotional"},
+            {name:"感情枯渇", val:-60, aro:-25, type:"other"},
+            {name:"強い緊張", val:-55, aro:70, type:"emotional"}
         ]
     },
     quetiapine: {
-        name: "クエチアピン（セロクエル・ビプレッソ）",
+        name: "クエチアピン（セロクエル）",
         color: "#FCC419",
         targets: [
-            {name:"漠然とした強い不安感", val:-55, aro:45, type:"emotional"},
-            {name:"死にたいほどの苦痛（希死念慮）", val:-90, aro:-10, type:"highrisk"},
-            {name:"悲しみと焦りが混ざった混合状態", val:-70, aro:40, type:"emotional"},
-            {name:"外部刺激への過剰な反応", val:-50, aro:70, type:"emotional"},
-            {name:"感情の爆発的な噴出", val:-40, aro:80, type:"emotional"},
-            {name:"夜間の不穏・混乱（せん妄）", val:-60, aro:70, type:"other"},
-            {name:"自責の念（自分を責める感情）", val:-80, aro:20, type:"emotional"},
-            {name:"孤独感や虚無感", val:-70, aro:-30, type:"emotional"},
-            {name:"緊張からくる心身のこわばり", val:-50, aro:55, type:"other"},
-            {name:"安静にできない焦燥感", val:-60, aro:70, type:"emotional"}
+            {name:"強い不安", val:-55, aro:45, type:"emotional"},
+            {name:"希死念慮", val:-90, aro:-10, type:"highrisk"},
+            {name:"混合状態", val:-70, aro:40, type:"emotional"},
+            {name:"過敏反応", val:-50, aro:70, type:"emotional"},
+            {name:"感情爆発", val:-40, aro:80, type:"emotional"},
+            {name:"夜間せん妄", val:-60, aro:70, type:"other"},
+            {name:"自責感", val:-80, aro:20, type:"emotional"},
+            {name:"虚無感", val:-70, aro:-30, type:"emotional"},
+            {name:"心身硬直", val:-50, aro:55, type:"other"},
+            {name:"焦燥不穏", val:-60, aro:70, type:"emotional"}
         ]
     },
     risperidone: {
         name: "リスペリドン（リスパダール）",
         color: "#FF6B6B",
         targets: [
-            {name:"幻聴に対する恐怖と怒り", val:-75, aro:75, type:"emotional"},
-            {name:"強い猜疑心（疑い深く攻撃的）", val:-70, aro:65, type:"emotional"},
-            {name:"衝動的な自傷・他害の感情", val:-85, aro:80, type:"highrisk"},
-            {name:"精神運動性の高い興奮", val:-45, aro:85, type:"emotional"},
-            {name:"感情の制御不能な乱れ", val:-60, aro:75, type:"emotional"},
-            {name:"思考の解体による不安", val:-60, aro:55, type:"other"},
-            {name:"周囲への強い敵意", val:-75, aro:70, type:"emotional"},
-            {name:"外部からの刺激に対する過敏さ", val:-55, aro:65, type:"other"},
-            {name:"慢性的で根深い妄想的な緊張", val:-65, aro:50, type:"other"},
-            {name:"情動が不安定なパニック状態", val:-70, aro:80, type:"emotional"}
+            {name:"幻聴恐怖", val:-75, aro:75, type:"emotional"},
+            {name:"強い猜疑心", val:-70, aro:65, type:"emotional"},
+            {name:"自傷他害", val:-85, aro:80, type:"highrisk"},
+            {name:"精神運動興奮", val:-45, aro:85, type:"emotional"},
+            {name:"感情制御不能", val:-60, aro:75, type:"emotional"},
+            {name:"思考解体不安", val:-60, aro:55, type:"other"},
+            {name:"強い敵意", val:-75, aro:70, type:"emotional"},
+            {name:"刺激過敏", val:-55, aro:65, type:"other"},
+            {name:"妄想的緊張", val:-65, aro:50, type:"other"},
+            {name:"パニック状態", val:-70, aro:80, type:"emotional"}
         ]
     },
     paliperidone: {
         name: "パリペリドン（インヴェガ）",
         color: "#4C6EF5",
         targets: [
-            {name:"妄想に基づいた持続的な緊張", val:-65, aro:55, type:"other"},
-            {name:"予測できない感情の変動", val:-30, aro:55, type:"emotional"},
-            {name:"社会的な交流への強い忌避感", val:-55, aro:-35, type:"other"},
-            {name:"感情の平板化（無感動）", val:-40, aro:-25, type:"other"},
-            {name:"意欲が完全に失われた状態", val:-50, aro:-55, type:"other"},
-            {name:"思考の停止感（頭が働かない）", val:-45, aro:-20, type:"other"},
-            {name:"慢性的な不信感", val:-60, aro:30, type:"emotional"},
-            {name:"独り言や空笑に伴う内面的な混乱", val:-50, aro:45, type:"other"},
-            {name:"自助能力が低下した際の無力感", val:-55, aro:-30, type:"emotional"},
-            {name:"24時間持続する神経過敏", val:-55, aro:60, type:"emotional"}
+            {name:"妄想的緊張", val:-65, aro:55, type:"other"},
+            {name:"感情変動", val:-30, aro:55, type:"emotional"},
+            {name:"社会的忌避", val:-55, aro:-35, type:"other"},
+            {name:"感情平板化", val:-40, aro:-25, type:"other"},
+            {name:"意欲喪失", val:-50, aro:-55, type:"other"},
+            {name:"思考停止", val:-45, aro:-20, type:"other"},
+            {name:"慢性不信", val:-60, aro:30, type:"emotional"},
+            {name:"内的混乱", val:-50, aro:45, type:"other"},
+            {name:"無力感", val:-55, aro:-30, type:"emotional"},
+            {name:"持続過敏", val:-55, aro:60, type:"emotional"}
         ]
     },
     brexpiprazole: {
         name: "ブレクスピプラゾール（レキサルティ）",
         color: "#20C997",
         targets: [
-            {name:"感情の動きが乏しい状態", val:-35, aro:-25, type:"other"},
-            {name:"最初の一歩が出ない「意欲の枯渇」", val:-45, aro:-40, type:"other"},
-            {name:"対人場面での強い回避感情", val:-50, aro:15, type:"emotional"},
-            {name:"漠然とした将来への不安", val:-55, aro:35, type:"emotional"},
-            {name:"思考スピードの停滞（頭の回転の悪さ）", val:-35, aro:-10, type:"other"},
-            {name:"喜びを見いだせない虚しさ", val:-65, aro:-20, type:"emotional"},
-            {name:"集中力の欠如による情けなさ", val:-50, aro:10, type:"emotional"},
-            {name:"自分の感情がわからない戸惑い", val:-45, aro:5, type:"emotional"},
-            {name:"社会的な役割への適応不安", val:-50, aro:25, type:"emotional"},
-            {name:"軽度のイライラや不機嫌", val:-30, aro:35, type:"emotional"}
+            {name:"感情鈍麻", val:-35, aro:-25, type:"other"},
+            {name:"意欲枯渇", val:-45, aro:-40, type:"other"},
+            {name:"対人回避", val:-50, aro:15, type:"emotional"},
+            {name:"将来不安", val:-55, aro:35, type:"emotional"},
+            {name:"思考停滞", val:-35, aro:-10, type:"other"},
+            {name:"虚しさ", val:-65, aro:-20, type:"emotional"},
+            {name:"集中困難", val:-50, aro:10, type:"emotional"},
+            {name:"感情困惑", val:-45, aro:5, type:"emotional"},
+            {name:"適応不安", val:-50, aro:25, type:"emotional"},
+            {name:"軽度苛立ち", val:-30, aro:35, type:"emotional"}
         ]
     },
     lurasidone: {
         name: "ルラシドン（ラツーダ）",
         color: "#12B886",
         targets: [
-            {name:"深い抑うつと悲しみ", val:-80, aro:-25, type:"emotional"},
-            {name:"何にも意味を感じられない絶望", val:-85, aro:-20, type:"emotional"},
-            {name:"判断力が低下した際の焦り", val:-55, aro:40, type:"emotional"},
-            {name:"社会的な孤立感と疎外感", val:-60, aro:-30, type:"emotional"},
-            {name:"喜びを喪失したアンヘドニア", val:-75, aro:-20, type:"emotional"},
-            {name:"自分を無価値だと思う感情", val:-80, aro:-10, type:"emotional"},
-            {name:"思考が停滞したことへの不全感", val:-55, aro:5, type:"emotional"},
-            {name:"悲観的な未来への恐怖", val:-70, aro:35, type:"emotional"},
-            {name:"意思決定ができない苦痛", val:-60, aro:20, type:"emotional"},
-            {name:"軽度の被害的な思考", val:-45, aro:25, type:"emotional"}
+            {name:"深い抑うつ", val:-80, aro:-25, type:"emotional"},
+            {name:"絶望感", val:-85, aro:-20, type:"emotional"},
+            {name:"判断力低下", val:-55, aro:40, type:"emotional"},
+            {name:"孤立感", val:-60, aro:-30, type:"emotional"},
+            {name:"アンヘドニア", val:-75, aro:-20, type:"emotional"},
+            {name:"無価値感", val:-80, aro:-10, type:"emotional"},
+            {name:"思考停滞", val:-55, aro:5, type:"emotional"},
+            {name:"悲観的恐怖", val:-70, aro:35, type:"emotional"},
+            {name:"決断困難", val:-60, aro:20, type:"emotional"},
+            {name:"被害的思考", val:-45, aro:25, type:"emotional"}
         ]
     },
     blonanserin: {
         name: "ブロナンセリン（ロナセン）",
         color: "#FF922B",
         targets: [
-            {name:"幻聴や妄想への強い囚われ", val:-65, aro:50, type:"other"},
-            {name:"社会活動に対する意欲の減退", val:-45, aro:-40, type:"other"},
-            {name:"認知機能の低下による自信喪失", val:-50, aro:-10, type:"emotional"},
-            {name:"感情の起伏がなくなった平板化", val:-40, aro:-25, type:"other"},
-            {name:"思考が遅れることによる対人不安", val:-45, aro:20, type:"emotional"},
-            {name:"外部との接触を避ける閉塞感", val:-55, aro:-20, type:"emotional"},
-            {name:"意識の鮮明さが欠けたボーッとした状態", val:-30, aro:-35, type:"other"},
-            {name:"活動性の低下した「無為」", val:-45, aro:-50, type:"other"},
-            {name:"注意力の欠如による不安", val:-45, aro:25, type:"emotional"},
-            {name:"妄想による継続的な警戒心", val:-60, aro:45, type:"emotional"}
+            {name:"幻覚妄想", val:-65, aro:50, type:"other"},
+            {name:"意欲減退", val:-45, aro:-40, type:"other"},
+            {name:"認知低下", val:-50, aro:-10, type:"emotional"},
+            {name:"感情平板", val:-40, aro:-25, type:"other"},
+            {name:"対人不安", val:-45, aro:20, type:"emotional"},
+            {name:"閉塞感", val:-55, aro:-20, type:"emotional"},
+            {name:"意識混濁", val:-30, aro:-35, type:"other"},
+            {name:"無為状態", val:-45, aro:-50, type:"other"},
+            {name:"注意欠如", val:-45, aro:25, type:"emotional"},
+            {name:"警戒心", val:-60, aro:45, type:"emotional"}
         ]
     },
     perospirone: {
         name: "ペロスピロン（ルーラン）",
         color: "#51CF66",
         targets: [
-            {name:"身体的な緊張を伴う不安", val:-55, aro:50, type:"emotional"},
-            {name:"些細なことに驚く過敏症", val:-40, aro:60, type:"emotional"},
-            {name:"軽度の抑うつ気分", val:-45, aro:-15, type:"emotional"},
-            {name:"対人場面での恐怖心", val:-60, aro:40, type:"emotional"},
-            {name:"同じことを考え続ける反芻（ループ）", val:-50, aro:25, type:"other"},
-            {name:"軽度の被害的妄想", val:-45, aro:35, type:"other"},
-            {name:"落ち着かないソワソワ感", val:-45, aro:55, type:"emotional"},
-            {name:"社会的な交流への不安", val:-50, aro:20, type:"emotional"},
-            {name:"神経過敏による睡眠への恐怖", val:-55, aro:45, type:"emotional"},
-            {name:"感情の微細な乱れ", val:-25, aro:25, type:"emotional"}
+            {name:"身体的緊張", val:-55, aro:50, type:"emotional"},
+            {name:"過敏症", val:-40, aro:60, type:"emotional"},
+            {name:"軽度抑うつ", val:-45, aro:-15, type:"emotional"},
+            {name:"対人恐怖", val:-60, aro:40, type:"emotional"},
+            {name:"反芻思考", val:-50, aro:25, type:"other"},
+            {name:"軽度妄想", val:-45, aro:35, type:"other"},
+            {name:"ソワソワ感", val:-45, aro:55, type:"emotional"},
+            {name:"社交不安", val:-50, aro:20, type:"emotional"},
+            {name:"睡眠恐怖", val:-55, aro:45, type:"emotional"},
+            {name:"感情の乱れ", val:-25, aro:25, type:"emotional"}
         ]
     },
     asenapine: {
         name: "アセナピン（シクレスト）",
         color: "#9775FA",
         targets: [
-            {name:"躁状態による急激な興奮", val:75, aro:85, type:"emotional"},
-            {name:"制御できない多弁と高揚", val:65, aro:80, type:"emotional"},
-            {name:"攻撃的な衝動・言動", val:-70, aro:80, type:"emotional"},
-            {name:"幻聴への即時的な恐怖反応", val:-75, aro:75, type:"emotional"},
-            {name:"激しい情緒の不安定", val:-40, aro:70, type:"emotional"},
-            {name:"焦りによる混乱状態", val:-55, aro:70, type:"emotional"},
-            {name:"破壊的なエネルギーの放出", val:-60, aro:85, type:"highrisk"},
-            {name:"外部環境への強い警戒と敵意", val:-70, aro:65, type:"emotional"},
-            {name:"思考が走りすぎる焦燥感", val:-55, aro:80, type:"emotional"},
-            {name:"衝動性を伴う不安", val:-60, aro:75, type:"emotional"}
+            {name:"躁的興奮", val:75, aro:85, type:"emotional"},
+            {name:"多弁高揚", val:65, aro:80, type:"emotional"},
+            {name:"攻撃的衝動", val:-70, aro:80, type:"emotional"},
+            {name:"幻聴恐怖", val:-75, aro:75, type:"emotional"},
+            {name:"情緒不安定", val:-40, aro:70, type:"emotional"},
+            {name:"混乱状態", val:-55, aro:70, type:"emotional"},
+            {name:"破壊的衝動", val:-60, aro:85, type:"highrisk"},
+            {name:"強い敵意", val:-70, aro:65, type:"emotional"},
+            {name:"思考奔逸", val:-55, aro:80, type:"emotional"},
+            {name:"衝動的不安", val:-60, aro:75, type:"emotional"}
         ]
     },
     clozapine: {
         name: "クロザピン（クロザリル）",
         color: "#E64980",
         targets: [
-            {name:"他の薬で消えない強固な絶望", val:-90, aro:-15, type:"emotional"},
-            {name:"制御不能な激しい暴力性", val:-85, aro:85, type:"highrisk"},
-            {name:"繰り返される強い自殺念慮", val:-95, aro:-5, type:"highrisk"},
-            {name:"深刻な感情の荒廃（冷淡さ）", val:-70, aro:-10, type:"emotional"},
-            {name:"生活を阻害する異常な衝動（多飲水など）", val:-55, aro:45, type:"other"},
-            {name:"治療に対する諦めや無力感", val:-70, aro:-20, type:"emotional"},
-            {name:"激しく持続する焦燥感", val:-65, aro:70, type:"emotional"},
-            {name:"世界への強い不信と敵意", val:-80, aro:55, type:"emotional"},
-            {name:"深刻な社会的引きこもり", val:-60, aro:-35, type:"other"},
-            {name:"既存薬では制御できない精神的混乱", val:-65, aro:60, type:"other"}
+            {name:"強固な絶望", val:-90, aro:-15, type:"emotional"},
+            {name:"激しい暴力", val:-85, aro:85, type:"highrisk"},
+            {name:"自殺念慮", val:-95, aro:-5, type:"highrisk"},
+            {name:"感情荒廃", val:-70, aro:-10, type:"emotional"},
+            {name:"異常衝動", val:-55, aro:45, type:"other"},
+            {name:"治療諦め", val:-70, aro:-20, type:"emotional"},
+            {name:"持続焦燥", val:-65, aro:70, type:"emotional"},
+            {name:"強い不信", val:-80, aro:55, type:"emotional"},
+            {name:"引きこもり", val:-60, aro:-35, type:"other"},
+            {name:"精神的混乱", val:-65, aro:60, type:"other"}
         ]
     }
 };
 
-// ▼ 背景感情を描画
+// 背景感情を描画
 function renderBackground(){
     const map = document.getElementById("emotion-map");
     emotionsVA.forEach(e => {
@@ -486,17 +503,77 @@ function renderBackground(){
     });
 }
 
-// ▼ ピンを追加（円内）
-function addSymptomPin(symptom, color, delay = 0) {
+// 位置の重なりをチェックして調整
+function adjustPosition(x, y, minDistance = 35) {
+    let adjustedX = x;
+    let adjustedY = y;
+    let angle = 0;
+    let distance = 0;
+    
+    // 既存のピンとの距離をチェック
+    for (let attempt = 0; attempt < 8; attempt++) {
+        let tooClose = false;
+        
+        for (let pin of placedPins) {
+            const dx = adjustedX - pin.x;
+            const dy = adjustedY - pin.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < minDistance) {
+                tooClose = true;
+                break;
+            }
+        }
+        
+        if (!tooClose) {
+            break;
+        }
+        
+        // 螺旋状に位置を調整
+        angle += Math.PI / 4;
+        distance = minDistance * 0.7;
+        adjustedX = x + Math.cos(angle) * distance;
+        adjustedY = y + Math.sin(angle) * distance;
+    }
+    
+    placedPins.push({x: adjustedX, y: adjustedY});
+    return {x: adjustedX, y: adjustedY};
+}
+
+// ピンを追加（改善版）
+function addSymptomPin(symptom, color, delay = 0, index = 0) {
     setTimeout(() => {
         const map = document.getElementById("emotion-map");
-        const px = centerX + (symptom.val/100)*radius;
-        const py = centerY - (symptom.aro/100)*radius;
+        let px = centerX + (symptom.val/100)*radius;
+        let py = centerY - (symptom.aro/100)*radius;
+        
+        // 位置の重なりを調整
+        const adjusted = adjustPosition(px, py);
+        px = adjusted.x;
+        py = adjusted.y;
         
         const pin = document.createElement("div");
         pin.className = "symptom-pin " + (symptom.type === 'other' ? 'other' : 'emotional');
         pin.style.left = `${px}px`;
         pin.style.top = `${py}px`;
+        pin.style.zIndex = 100 + index;
+        
+        // 元の位置と異なる場合は接続線を描画
+        if (Math.abs(adjusted.x - (centerX + (symptom.val/100)*radius)) > 5 ||
+            Math.abs(adjusted.y - (centerY - (symptom.aro/100)*radius)) > 5) {
+            const line = document.createElement("div");
+            line.className = "connection-line";
+            const origX = centerX + (symptom.val/100)*radius;
+            const origY = centerY - (symptom.aro/100)*radius;
+            const length = Math.sqrt(Math.pow(px - origX, 2) + Math.pow(py - origY, 2));
+            const angle = Math.atan2(py - origY, px - origX);
+            
+            line.style.left = `${origX}px`;
+            line.style.top = `${origY}px`;
+            line.style.width = `${length}px`;
+            line.style.transform = `rotate(${angle}rad)`;
+            map.appendChild(line);
+        }
         
         pin.innerHTML = `
             <div class="pin-head" style="background: ${color};"></div>
@@ -508,33 +585,40 @@ function addSymptomPin(symptom, color, delay = 0) {
     }, delay);
 }
 
-// ▼ 高リスク状態を円外に表示
+// 高リスク症状を円外に表示（複数対応）
+let highRiskCount = 0;
 function addHighRiskSymptom(symptom, color, delay = 0) {
     setTimeout(() => {
         const map = document.getElementById("emotion-map");
         const box = document.createElement("div");
         box.className = "highrisk-box symptom-pin";
         box.style.left = "50%";
-        box.style.top  = "100%";
+        box.style.top = "100%";
+        box.style.transform = `translate(-50%, ${20 + highRiskCount * 60}px)`;
+        highRiskCount++;
 
         box.innerHTML = `
             <div class="highrisk-icon">⚠</div>
             <div class="highrisk-text">
                 <strong>${symptom.name}</strong>
-                <span>この状態は Valence×Arousal だけでは表しきれない高リスク状態です。実際の評価・対応は、主治医など医療者との相談が必要です。</span>
+                <span>高リスク状態（医療者との相談が必要）</span>
             </div>
         `;
         map.appendChild(box);
     }, delay);
 }
 
-// ▼ ピンをクリア
+// ピンをクリア
 function clearPins() {
     const pins = document.querySelectorAll('.symptom-pin');
+    const lines = document.querySelectorAll('.connection-line');
     pins.forEach(pin => pin.remove());
+    lines.forEach(line => line.remove());
+    placedPins = [];
+    highRiskCount = 0;
 }
 
-// ▼ 薬剤ターゲットを表示
+// 薬剤ターゲットを表示
 function showDrugTargets(evt, drugKey) {
     // ボタンのアクティブ状態を更新
     document.querySelectorAll('.drug-btn').forEach(btn => {
@@ -551,13 +635,11 @@ function showDrugTargets(evt, drugKey) {
     if (drugKey === 'clear') {
         infoBox.innerHTML = `
             薬剤を選択すると、その薬が主にアプローチする「情動の状態」が感情円環上にマッピングされます。<br>
+            <strong>ヒント：ピンにマウスを重ねると詳細が見やすくなります</strong><br>
             <div class="legend">
-                <span class="leg-emotional">● 情動トーンに近い状態（円内ピン）</span><br>
-                <span class="leg-other">■ 認知・行動・持続性などを含む状態（情動トーンの一例として円内に表示）</span><br>
-                <span class="leg-high">⚠ 高リスク状態（Valence×Arousalで単純に表せないため円外に表示）</span>
-            </div>
-            <div style="margin-top:6px; font-size:11px; color:#888;">
-                ※各位置は典型的な情動トーンのイメージであり、実際の患者さんの体験や診断を置き換えるものではありません。
+                <span class="leg-emotional">● 情動トーンに近い状態</span>
+                <span class="leg-other">■ 認知・行動・持続性などを含む状態</span>
+                <span class="leg-high">⚠ 高リスク状態</span>
             </div>
         `;
         return;
@@ -567,20 +649,18 @@ function showDrugTargets(evt, drugKey) {
     if (drug) {
         infoBox.innerHTML = `
             <strong>${drug.name}</strong> が主にアプローチする情動の状態を表示中<br>
+            <strong>ヒント：ピンにマウスを重ねると詳細が見やすくなります</strong><br>
             <div class="legend">
-                <span class="leg-emotional">● 情動トーンに近い状態（円内ピン）</span><br>
-                <span class="leg-other">■ 認知・行動・持続性などを含む状態（情動トーンの一例として円内に表示）</span><br>
-                <span class="leg-high">⚠ 高リスク状態（Valence×Arousalで単純に表せないため円外に表示）</span>
-            </div>
-            <div style="margin-top:6px; font-size:11px; color:#888;">
-                ※マッピングは教育用の概念モデルであり、治療方針の決定や診断そのものを示すものではありません。
+                <span class="leg-emotional">● 情動トーンに近い状態</span>
+                <span class="leg-other">■ 認知・行動・持続性などを含む状態</span>
+                <span class="leg-high">⚠ 高リスク状態</span>
             </div>
         `;
         drug.targets.forEach((symptom, index) => {
             if (symptom.type === "highrisk") {
-                addHighRiskSymptom(symptom, drug.color, index * 150);
+                addHighRiskSymptom(symptom, drug.color, index * 100);
             } else {
-                addSymptomPin(symptom, drug.color, index * 150);
+                addSymptomPin(symptom, drug.color, index * 100, index);
             }
         });
     }
