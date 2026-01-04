@@ -43,12 +43,20 @@
     #emotion-map {
         position:relative;
         width:600px;
-        height:600px;
+        height:680px;
         margin:20px auto;
+    }
+    
+    .circle-area {
+        position:absolute;
+        width:600px;
+        height:600px;
+        top:40px;
         border-radius:50%;
         background:radial-gradient(circle,#f7f7f7 0%,#e8e8e8 60%,#ddd 100%);
         border:3px solid #999;
     }
+    
     .axis-h { position:absolute; top:50%; left:10px; right:10px; height:1px; background:#aaa; }
     .axis-v { position:absolute; left:50%; top:10px; bottom:10px; width:1px; background:#aaa; }
 
@@ -71,7 +79,7 @@
         opacity: 0.7;
     }
     
-    /* ピン共通 */
+    /* 円内ピン（感情） */
     .symptom-pin {
         position: absolute;
         transform: translate(-50%, -100%);
@@ -82,7 +90,7 @@
     
     .symptom-pin:hover {
         z-index: 1000 !important;
-        transform: translate(-50%, -100%) scale(1.1);
+        transform: translate(-50%, -100%) scale(1.15);
     }
     
     .symptom-pin:hover .symptom-label {
@@ -137,31 +145,49 @@
         transition: all 0.3s;
     }
 
+    /* 円外ボックス（認知・行動） */
+    .other-box {
+        position: absolute;
+        background: #f8f9fa;
+        border: 2px solid;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: bold;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.3s;
+        animation: fadeIn 0.5s ease-out;
+    }
+    
+    .other-box:hover {
+        transform: scale(1.1);
+        z-index: 1000;
+        background: #fffae0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
     /* 接続線 */
     .connection-line {
         position: absolute;
-        height: 1px;
+        height: 2px;
         background: rgba(0,0,0,0.2);
         transform-origin: left center;
         pointer-events: none;
         z-index: 1;
     }
-
-    /* 種類別スタイル */
-    .symptom-pin.other .pin-head {
-        border-radius: 6px;
-    }
-    .symptom-pin.other .symptom-label {
-        border: 1px dashed rgba(0,0,0,0.2);
-        font-weight: normal;
+    
+    .connection-line.dashed {
+        background: none;
+        border-top: 2px dashed rgba(0,0,0,0.3);
     }
 
     /* 高リスク症状 */
     .highrisk-box {
         position:absolute;
         left:50%;
-        top:100%;
-        transform:translate(-50%, 20px);
+        bottom: 10px;
+        transform:translateX(-50%);
         background:#fff5f5;
         border:2px solid #fa5252;
         color:#c92a2a;
@@ -195,6 +221,17 @@
         to {
             transform: translate(-50%, -100%) scale(1);
             opacity: 1;
+        }
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
         }
     }
     
@@ -249,33 +286,37 @@
 </div>
 
 <div id="emotion-map">
-    <div class="axis-h"></div>
-    <div class="axis-v"></div>
+    <div class="circle-area">
+        <div class="axis-h"></div>
+        <div class="axis-v"></div>
 
-    <div class="axis-label label-top">高覚醒（High Arousal）</div>
-    <div class="axis-label label-bottom">低覚醒（Low Arousal）</div>
-    <div class="axis-label label-left">不快（Unpleasant）</div>
-    <div class="axis-label label-right">快（Pleasant）</div>
+        <div class="axis-label label-top">高覚醒（High Arousal）</div>
+        <div class="axis-label label-bottom">低覚醒（Low Arousal）</div>
+        <div class="axis-label label-left">不快（Unpleasant）</div>
+        <div class="axis-label label-right">快（Pleasant）</div>
+    </div>
 </div>
 
 <div class="info-box" id="info-box">
-    薬剤を選択すると、その薬が主にアプローチする「情動の状態」が感情円環上にマッピングされます。<br>
-    <strong>ヒント：ピンにマウスを重ねると詳細が見やすくなります</strong><br>
+    薬剤を選択すると、その薬が主にアプローチする状態がマッピングされます。<br>
+    <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
     <div class="legend">
-        <span class="leg-emotional">● 情動トーンに近い状態</span>
-        <span class="leg-other">■ 認知・行動・持続性などを含む状態</span>
-        <span class="leg-high">⚠ 高リスク状態</span>
+        <span class="leg-emotional">● 情動状態（円内）</span>
+        <span class="leg-other">■ 認知・行動症状（円外）</span>
+        <span class="leg-high">⚠ 高リスク状態（下部）</span>
     </div>
 </div>
 </div>
 
 <script>
 const centerX = 300;
-const centerY = 300;
+const centerY = 340;  // 円の中心を調整
 const radius = 250;
 
 // 配置済みピンの位置を記録
 let placedPins = [];
+let placedBoxes = [];
+let otherBoxCount = 0;
 
 // 背景の感情配置
 const emotionsVA = [
@@ -285,29 +326,23 @@ const emotionsVA = [
  {ja:"大喜びの", val:80, aro:70},
  {ja:"幸せな", val:85, aro:55},
  {ja:"嬉しい", val:70, aro:45},
- {ja:"喜ばしい", val:60, aro:40},
  {ja:"平穏な", val:55, aro:10},
  {ja:"満足した", val:65, aro:5},
- {ja:"くつろいだ", val:45, aro:-10},
  {ja:"リラックスした", val:40, aro:-25},
  {ja:"穏やかな", val:30, aro:-35},
- {ja:"安らかな", val:25, aro:-45},
  {ja:"眠い", val:10, aro:-70},
  {ja:"疲れた", val:-10, aro:-65},
- {ja:"元気のない", val:-25, aro:-55},
  {ja:"陰気な", val:-50, aro:-40},
  {ja:"悲しい", val:-70, aro:-35},
- {ja:"苦痛な", val:-75, aro:-10},
  {ja:"怒った", val:-70, aro:55},
  {ja:"怖い", val:-55, aro:70},
  {ja:"心配な", val:-45, aro:40},
  {ja:"動揺した", val:-50, aro:55},
- {ja:"疲労した", val:-20, aro:-50},
  {ja:"退屈な", val:-40, aro:-30},
  {ja:"静かな", val:35, aro:-20}
 ];
 
-// 薬剤データ（既存のものを短縮表示）
+// 薬剤データ（既存のものを使用）
 const drugTargets = {
     aripiprazole: {
         name: "アリピプラゾール（エビリファイ）",
@@ -427,13 +462,13 @@ const drugTargets = {
         targets: [
             {name:"幻覚妄想", val:-65, aro:50, type:"other"},
             {name:"意欲減退", val:-45, aro:-40, type:"other"},
-            {name:"認知低下", val:-50, aro:-10, type:"emotional"},
+            {name:"認知低下", val:-50, aro:-10, type:"other"},
             {name:"感情平板", val:-40, aro:-25, type:"other"},
             {name:"対人不安", val:-45, aro:20, type:"emotional"},
             {name:"閉塞感", val:-55, aro:-20, type:"emotional"},
             {name:"意識混濁", val:-30, aro:-35, type:"other"},
             {name:"無為状態", val:-45, aro:-50, type:"other"},
-            {name:"注意欠如", val:-45, aro:25, type:"emotional"},
+            {name:"注意欠如", val:-45, aro:25, type:"other"},
             {name:"警戒心", val:-60, aro:45, type:"emotional"}
         ]
     },
@@ -489,7 +524,7 @@ const drugTargets = {
 
 // 背景感情を描画
 function renderBackground(){
-    const map = document.getElementById("emotion-map");
+    const circle = document.querySelector(".circle-area");
     emotionsVA.forEach(e => {
         const px = centerX + (e.val/100)*radius;
         const py = centerY - (e.aro/100)*radius;
@@ -499,18 +534,17 @@ function renderBackground(){
         d.style.left = `${px}px`;
         d.style.top = `${py}px`;
         d.textContent = e.ja;
-        map.appendChild(d);
+        circle.appendChild(d);
     });
 }
 
-// 位置の重なりをチェックして調整
+// 円内の位置調整
 function adjustPosition(x, y, minDistance = 35) {
     let adjustedX = x;
     let adjustedY = y;
     let angle = 0;
     let distance = 0;
     
-    // 既存のピンとの距離をチェック
     for (let attempt = 0; attempt < 8; attempt++) {
         let tooClose = false;
         
@@ -529,7 +563,6 @@ function adjustPosition(x, y, minDistance = 35) {
             break;
         }
         
-        // 螺旋状に位置を調整
         angle += Math.PI / 4;
         distance = minDistance * 0.7;
         adjustedX = x + Math.cos(angle) * distance;
@@ -540,40 +573,22 @@ function adjustPosition(x, y, minDistance = 35) {
     return {x: adjustedX, y: adjustedY};
 }
 
-// ピンを追加（改善版）
-function addSymptomPin(symptom, color, delay = 0, index = 0) {
+// 円内ピン（emotional）を追加
+function addEmotionalPin(symptom, color, delay = 0, index = 0) {
     setTimeout(() => {
-        const map = document.getElementById("emotion-map");
+        const circle = document.querySelector(".circle-area");
         let px = centerX + (symptom.val/100)*radius;
         let py = centerY - (symptom.aro/100)*radius;
         
-        // 位置の重なりを調整
         const adjusted = adjustPosition(px, py);
         px = adjusted.x;
         py = adjusted.y;
         
         const pin = document.createElement("div");
-        pin.className = "symptom-pin " + (symptom.type === 'other' ? 'other' : 'emotional');
+        pin.className = "symptom-pin emotional";
         pin.style.left = `${px}px`;
         pin.style.top = `${py}px`;
         pin.style.zIndex = 100 + index;
-        
-        // 元の位置と異なる場合は接続線を描画
-        if (Math.abs(adjusted.x - (centerX + (symptom.val/100)*radius)) > 5 ||
-            Math.abs(adjusted.y - (centerY - (symptom.aro/100)*radius)) > 5) {
-            const line = document.createElement("div");
-            line.className = "connection-line";
-            const origX = centerX + (symptom.val/100)*radius;
-            const origY = centerY - (symptom.aro/100)*radius;
-            const length = Math.sqrt(Math.pow(px - origX, 2) + Math.pow(py - origY, 2));
-            const angle = Math.atan2(py - origY, px - origX);
-            
-            line.style.left = `${origX}px`;
-            line.style.top = `${origY}px`;
-            line.style.width = `${length}px`;
-            line.style.transform = `rotate(${angle}rad)`;
-            map.appendChild(line);
-        }
         
         pin.innerHTML = `
             <div class="pin-head" style="background: ${color};"></div>
@@ -581,46 +596,119 @@ function addSymptomPin(symptom, color, delay = 0, index = 0) {
             <div class="symptom-label" style="color: ${color};">${symptom.name}</div>
         `;
         
-        map.appendChild(pin);
+        circle.appendChild(pin);
     }, delay);
 }
 
-// 高リスク症状を円外に表示（複数対応）
+// 円外ボックス（other）を追加
+function addOtherBox(symptom, color, delay = 0) {
+    setTimeout(() => {
+        const map = document.getElementById("emotion-map");
+        const circle = document.querySelector(".circle-area");
+        
+        // 元の位置（円内）を計算
+        const origX = centerX + (symptom.val/100)*radius;
+        const origY = centerY - (symptom.aro/100)*radius;
+        
+        // 円外の位置を計算（上部と左右に配置）
+        const angle = Math.atan2(origY - centerY, origX - centerX);
+        let boxX, boxY;
+        
+        // 配置位置の計算（円の周囲に配置）
+        if (otherBoxCount < 4) {
+            // 上部
+            boxX = 100 + (otherBoxCount % 4) * 120;
+            boxY = 10;
+        } else if (otherBoxCount < 8) {
+            // 右側
+            boxX = 520;
+            boxY = 100 + ((otherBoxCount - 4) % 4) * 80;
+        } else if (otherBoxCount < 12) {
+            // 下部
+            boxX = 100 + ((otherBoxCount - 8) % 4) * 120;
+            boxY = 620;
+        } else {
+            // 左側
+            boxX = 30;
+            boxY = 100 + ((otherBoxCount - 12) % 4) * 80;
+        }
+        
+        otherBoxCount++;
+        
+        // ボックスを作成
+        const box = document.createElement("div");
+        box.className = "other-box";
+        box.style.left = `${boxX}px`;
+        box.style.top = `${boxY}px`;
+        box.style.borderColor = color;
+        box.style.color = color;
+        box.textContent = symptom.name;
+        
+        map.appendChild(box);
+        
+        // 接続線を描画
+        setTimeout(() => {
+            const line = document.createElement("div");
+            line.className = "connection-line dashed";
+            
+            const dx = boxX - origX;
+            const dy = boxY - origY;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const lineAngle = Math.atan2(dy, dx);
+            
+            line.style.left = `${origX}px`;
+            line.style.top = `${origY}px`;
+            line.style.width = `${length}px`;
+            line.style.transform = `rotate(${lineAngle}rad)`;
+            line.style.borderColor = color;
+            
+            circle.appendChild(line);
+        }, 50);
+        
+    }, delay);
+}
+
+// 高リスク症状を下部に表示
 let highRiskCount = 0;
 function addHighRiskSymptom(symptom, color, delay = 0) {
     setTimeout(() => {
         const map = document.getElementById("emotion-map");
         const box = document.createElement("div");
-        box.className = "highrisk-box symptom-pin";
-        box.style.left = "50%";
-        box.style.top = "100%";
-        box.style.transform = `translate(-50%, ${20 + highRiskCount * 60}px)`;
+        box.className = "highrisk-box";
+        box.style.bottom = `${10 + highRiskCount * 50}px`;
         highRiskCount++;
 
         box.innerHTML = `
             <div class="highrisk-icon">⚠</div>
             <div class="highrisk-text">
                 <strong>${symptom.name}</strong>
-                <span>高リスク状態（医療者との相談が必要）</span>
+                <span>高リスク状態</span>
             </div>
         `;
         map.appendChild(box);
     }, delay);
 }
 
-// ピンをクリア
+// クリア
 function clearPins() {
     const pins = document.querySelectorAll('.symptom-pin');
+    const boxes = document.querySelectorAll('.other-box');
     const lines = document.querySelectorAll('.connection-line');
-    pins.forEach(pin => pin.remove());
-    lines.forEach(line => line.remove());
+    const highrisk = document.querySelectorAll('.highrisk-box');
+    
+    pins.forEach(el => el.remove());
+    boxes.forEach(el => el.remove());
+    lines.forEach(el => el.remove());
+    highrisk.forEach(el => el.remove());
+    
     placedPins = [];
+    placedBoxes = [];
+    otherBoxCount = 0;
     highRiskCount = 0;
 }
 
 // 薬剤ターゲットを表示
 function showDrugTargets(evt, drugKey) {
-    // ボタンのアクティブ状態を更新
     document.querySelectorAll('.drug-btn').forEach(btn => {
         btn.classList.remove('active');
     });
@@ -634,12 +722,12 @@ function showDrugTargets(evt, drugKey) {
     
     if (drugKey === 'clear') {
         infoBox.innerHTML = `
-            薬剤を選択すると、その薬が主にアプローチする「情動の状態」が感情円環上にマッピングされます。<br>
-            <strong>ヒント：ピンにマウスを重ねると詳細が見やすくなります</strong><br>
+            薬剤を選択すると、その薬が主にアプローチする状態がマッピングされます。<br>
+            <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
             <div class="legend">
-                <span class="leg-emotional">● 情動トーンに近い状態</span>
-                <span class="leg-other">■ 認知・行動・持続性などを含む状態</span>
-                <span class="leg-high">⚠ 高リスク状態</span>
+                <span class="leg-emotional">● 情動状態（円内）</span>
+                <span class="leg-other">■ 認知・行動症状（円外）</span>
+                <span class="leg-high">⚠ 高リスク状態（下部）</span>
             </div>
         `;
         return;
@@ -648,19 +736,23 @@ function showDrugTargets(evt, drugKey) {
     const drug = drugTargets[drugKey];
     if (drug) {
         infoBox.innerHTML = `
-            <strong>${drug.name}</strong> が主にアプローチする情動の状態を表示中<br>
-            <strong>ヒント：ピンにマウスを重ねると詳細が見やすくなります</strong><br>
+            <strong>${drug.name}</strong> が主にアプローチする状態を表示中<br>
+            <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
             <div class="legend">
-                <span class="leg-emotional">● 情動トーンに近い状態</span>
-                <span class="leg-other">■ 認知・行動・持続性などを含む状態</span>
-                <span class="leg-high">⚠ 高リスク状態</span>
+                <span class="leg-emotional">● 情動状態（円内）</span>
+                <span class="leg-other">■ 認知・行動症状（円外）</span>
+                <span class="leg-high">⚠ 高リスク状態（下部）</span>
             </div>
         `;
+        
+        let emotionalIndex = 0;
         drug.targets.forEach((symptom, index) => {
             if (symptom.type === "highrisk") {
                 addHighRiskSymptom(symptom, drug.color, index * 100);
+            } else if (symptom.type === "other") {
+                addOtherBox(symptom, drug.color, index * 100);
             } else {
-                addSymptomPin(symptom, drug.color, index * 100, index);
+                addEmotionalPin(symptom, drug.color, index * 100, emotionalIndex++);
             }
         });
     }
