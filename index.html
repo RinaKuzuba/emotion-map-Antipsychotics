@@ -42,8 +42,8 @@
     
     #emotion-map {
         position:relative;
-        width:600px;
-        height:680px;
+        width:700px;
+        height:700px;
         margin:20px auto;
     }
     
@@ -51,7 +51,8 @@
         position:absolute;
         width:600px;
         height:600px;
-        top:40px;
+        top:50px;
+        left:50px;
         border-radius:50%;
         background:radial-gradient(circle,#f7f7f7 0%,#e8e8e8 60%,#ddd 100%);
         border:3px solid #999;
@@ -158,6 +159,8 @@
         cursor: pointer;
         transition: all 0.3s;
         animation: fadeIn 0.5s ease-out;
+        max-width: 100px;
+        text-align: center;
     }
     
     .other-box:hover {
@@ -179,7 +182,8 @@
     
     .connection-line.dashed {
         background: none;
-        border-top: 2px dashed rgba(0,0,0,0.3);
+        border-top: 2px dashed;
+        opacity: 0.5;
     }
 
     /* 高リスク症状 */
@@ -302,7 +306,7 @@
     <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
     <div class="legend">
         <span class="leg-emotional">● 情動状態（円内）</span>
-        <span class="leg-other">■ 認知・行動症状（円外）</span>
+        <span class="leg-other">■ 認知・行動症状（円外・最短距離配置）</span>
         <span class="leg-high">⚠ 高リスク状態（下部）</span>
     </div>
 </div>
@@ -310,13 +314,14 @@
 
 <script>
 const centerX = 300;
-const centerY = 340;  // 円の中心を調整
+const centerY = 300;
 const radius = 250;
+const mapOffsetX = 50;  // 円の左端からの距離
+const mapOffsetY = 50;  // 円の上端からの距離
 
 // 配置済みピンの位置を記録
 let placedPins = [];
 let placedBoxes = [];
-let otherBoxCount = 0;
 
 // 背景の感情配置
 const emotionsVA = [
@@ -573,6 +578,53 @@ function adjustPosition(x, y, minDistance = 35) {
     return {x: adjustedX, y: adjustedY};
 }
 
+// 円外ボックスの最適位置を計算
+function findOptimalBoxPosition(origX, origY, boxWidth = 100, boxHeight = 30) {
+    // 円の中心からの角度を計算
+    const angle = Math.atan2(origY - centerY, origX - centerX);
+    
+    // 円の外側に配置（半径 + マージン）
+    const margin = 320;  // 円の半径250 + 70pxのマージン
+    let boxX = centerX + Math.cos(angle) * margin;
+    let boxY = centerY + Math.sin(angle) * margin;
+    
+    // マップ全体での座標に変換
+    boxX += mapOffsetX;
+    boxY += mapOffsetY;
+    
+    // ボックスの中心位置を調整（ボックスの左上が基準のため）
+    boxX -= boxWidth / 2;
+    boxY -= boxHeight / 2;
+    
+    // 既存のボックスとの重なりをチェック
+    let attempts = 0;
+    while (attempts < 8) {
+        let overlap = false;
+        
+        for (let box of placedBoxes) {
+            if (Math.abs(boxX - box.x) < boxWidth && 
+                Math.abs(boxY - box.y) < boxHeight) {
+                overlap = true;
+                break;
+            }
+        }
+        
+        if (!overlap) {
+            break;
+        }
+        
+        // 重なっている場合は少しずらす
+        const offsetAngle = angle + (attempts * 0.3);
+        const offsetRadius = margin + (attempts * 15);
+        boxX = centerX + Math.cos(offsetAngle) * offsetRadius + mapOffsetX - boxWidth/2;
+        boxY = centerY + Math.sin(offsetAngle) * offsetRadius + mapOffsetY - boxHeight/2;
+        attempts++;
+    }
+    
+    placedBoxes.push({x: boxX, y: boxY});
+    return {x: boxX, y: boxY};
+}
+
 // 円内ピン（emotional）を追加
 function addEmotionalPin(symptom, color, delay = 0, index = 0) {
     setTimeout(() => {
@@ -600,46 +652,23 @@ function addEmotionalPin(symptom, color, delay = 0, index = 0) {
     }, delay);
 }
 
-// 円外ボックス（other）を追加
+// 円外ボックス（other）を追加 - 最短距離配置
 function addOtherBox(symptom, color, delay = 0) {
     setTimeout(() => {
         const map = document.getElementById("emotion-map");
-        const circle = document.querySelector(".circle-area");
         
         // 元の位置（円内）を計算
         const origX = centerX + (symptom.val/100)*radius;
         const origY = centerY - (symptom.aro/100)*radius;
         
-        // 円外の位置を計算（上部と左右に配置）
-        const angle = Math.atan2(origY - centerY, origX - centerX);
-        let boxX, boxY;
-        
-        // 配置位置の計算（円の周囲に配置）
-        if (otherBoxCount < 4) {
-            // 上部
-            boxX = 100 + (otherBoxCount % 4) * 120;
-            boxY = 10;
-        } else if (otherBoxCount < 8) {
-            // 右側
-            boxX = 520;
-            boxY = 100 + ((otherBoxCount - 4) % 4) * 80;
-        } else if (otherBoxCount < 12) {
-            // 下部
-            boxX = 100 + ((otherBoxCount - 8) % 4) * 120;
-            boxY = 620;
-        } else {
-            // 左側
-            boxX = 30;
-            boxY = 100 + ((otherBoxCount - 12) % 4) * 80;
-        }
-        
-        otherBoxCount++;
+        // 最適な円外位置を計算
+        const boxPos = findOptimalBoxPosition(origX, origY);
         
         // ボックスを作成
         const box = document.createElement("div");
         box.className = "other-box";
-        box.style.left = `${boxX}px`;
-        box.style.top = `${boxY}px`;
+        box.style.left = `${boxPos.x}px`;
+        box.style.top = `${boxPos.y}px`;
         box.style.borderColor = color;
         box.style.color = color;
         box.textContent = symptom.name;
@@ -651,8 +680,12 @@ function addOtherBox(symptom, color, delay = 0) {
             const line = document.createElement("div");
             line.className = "connection-line dashed";
             
-            const dx = boxX - origX;
-            const dy = boxY - origY;
+            // ボックスの中心座標を計算
+            const boxCenterX = boxPos.x + 50 - mapOffsetX;  // ボックス幅の半分
+            const boxCenterY = boxPos.y + 15 - mapOffsetY;  // ボックス高さの半分
+            
+            const dx = boxCenterX - origX;
+            const dy = boxCenterY - origY;
             const length = Math.sqrt(dx * dx + dy * dy);
             const lineAngle = Math.atan2(dy, dx);
             
@@ -662,7 +695,7 @@ function addOtherBox(symptom, color, delay = 0) {
             line.style.transform = `rotate(${lineAngle}rad)`;
             line.style.borderColor = color;
             
-            circle.appendChild(line);
+            document.querySelector(".circle-area").appendChild(line);
         }, 50);
         
     }, delay);
@@ -703,7 +736,6 @@ function clearPins() {
     
     placedPins = [];
     placedBoxes = [];
-    otherBoxCount = 0;
     highRiskCount = 0;
 }
 
@@ -726,7 +758,7 @@ function showDrugTargets(evt, drugKey) {
             <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
             <div class="legend">
                 <span class="leg-emotional">● 情動状態（円内）</span>
-                <span class="leg-other">■ 認知・行動症状（円外）</span>
+                <span class="leg-other">■ 認知・行動症状（円外・最短距離配置）</span>
                 <span class="leg-high">⚠ 高リスク状態（下部）</span>
             </div>
         `;
@@ -740,7 +772,7 @@ function showDrugTargets(evt, drugKey) {
             <strong>ヒント：要素にマウスを重ねると詳細が見やすくなります</strong><br>
             <div class="legend">
                 <span class="leg-emotional">● 情動状態（円内）</span>
-                <span class="leg-other">■ 認知・行動症状（円外）</span>
+                <span class="leg-other">■ 認知・行動症状（円外・最短距離配置）</span>
                 <span class="leg-high">⚠ 高リスク状態（下部）</span>
             </div>
         `;
