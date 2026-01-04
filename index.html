@@ -122,9 +122,6 @@
     }
 
     /* 種類別スタイル */
-    /* 情動系：丸ピン（デフォルト） */
-
-    /* 認知・行動・生理など：角ピン＋点線ラベル */
     .symptom-pin.other .pin-head {
         border-radius: 6px;
     }
@@ -212,17 +209,17 @@
 
 <div class="drug-selector">
     <button class="drug-btn active" onclick="showDrugTargets(event,'clear')">クリア</button>
-    <button class="drug-btn" onclick="showDrugTargets(event,'risperidone')">リスペリドン</button>
-    <button class="drug-btn" onclick="showDrugTargets(event,'paliperidone')">パリペリドン</button>
-    <button class="drug-btn" onclick="showDrugTargets(event,'perospirone')">ペロスピロン</button>
-    <button class="drug-btn" onclick="showDrugTargets(event,'blonanserin')">ブロナンセリン</button>
-    <button class="drug-btn" onclick="showDrugTargets(event,'lurasidone')">ルラシドン</button>
+    <button class="drug-btn" onclick="showDrugTargets(event,'aripiprazole')">アリピプラゾール</button>
     <button class="drug-btn" onclick="showDrugTargets(event,'olanzapine')">オランザピン</button>
     <button class="drug-btn" onclick="showDrugTargets(event,'quetiapine')">クエチアピン</button>
+    <button class="drug-btn" onclick="showDrugTargets(event,'risperidone')">リスペリドン</button>
+    <button class="drug-btn" onclick="showDrugTargets(event,'paliperidone')">パリペリドン</button>
+    <button class="drug-btn" onclick="showDrugTargets(event,'brexpiprazole')">ブレクスピプラゾール</button>
+    <button class="drug-btn" onclick="showDrugTargets(event,'lurasidone')">ルラシドン</button>
+    <button class="drug-btn" onclick="showDrugTargets(event,'blonanserin')">ブロナンセリン</button>
+    <button class="drug-btn" onclick="showDrugTargets(event,'perospirone')">ペロスピロン</button>
     <button class="drug-btn" onclick="showDrugTargets(event,'asenapine')">アセナピン</button>
     <button class="drug-btn" onclick="showDrugTargets(event,'clozapine')">クロザピン</button>
-    <button class="drug-btn" onclick="showDrugTargets(event,'aripiprazole')">アリピプラゾール</button>
-    <button class="drug-btn" onclick="showDrugTargets(event,'zotepine')">ゾテピン</button>
 </div>
 
 <div id="emotion-map">
@@ -236,10 +233,10 @@
 </div>
 
 <div class="info-box" id="info-box">
-    薬剤を選択すると、その薬が主にターゲットとする状態が感情円環上にマッピングされます。<br>
+    薬剤を選択すると、その薬が主にアプローチする「情動の状態」が感情円環上にマッピングされます。<br>
     <div class="legend">
         <span class="leg-emotional">● 情動トーンに近い状態（円内ピン）</span><br>
-        <span class="leg-other">■ 認知・行動・生理・持続性などの状態（情動トーンの一例として円内に表示）</span><br>
+        <span class="leg-other">■ 認知・行動・持続性などを含む状態（情動トーンの一例として円内に表示）</span><br>
         <span class="leg-high">⚠ 高リスク状態（Valence×Arousalで単純に表せないため円外に表示）</span>
     </div>
     <div style="margin-top:6px; font-size:11px; color:#888;">
@@ -290,185 +287,185 @@ const emotionsVA = [
  {ja:"受動的な", val:0, aro:-20}
 ];
 
-// ▼ 薬剤ごとのターゲット状態
+// ▼ 薬剤ごとの「アプローチする状態」
 // type: "emotional"（情動トーンに近い）
-//       "other"    （認知・行動・生理・長期経過など）
+//       "other"    （認知・行動・持続性などを含む）
 //       "highrisk"（高リスク状態：円外表示）
 const drugTargets = {
-    risperidone: {
-        name: "リスペリドン（リスパダール）",
-        color: "#FF6B6B",
+    aripiprazole: {
+        name: "アリピプラゾール（エビリファイ）",
+        color: "#15AABF",
         targets: [
-            {name:"幻聴", val:-60, aro:70, type:"other"},
-            {name:"被害妄想", val:-70, aro:65, type:"other"},
-            {name:"思考の混乱", val:-55, aro:55, type:"other"},
-            {name:"急激な興奮", val:-40, aro:85, type:"emotional"},
-            {name:"攻撃性", val:-65, aro:80, type:"emotional"},
-            {name:"自閉スペクトラム症の易刺激性", val:-40, aro:65, type:"other"},
-            {name:"認知症の激越", val:-55, aro:75, type:"other"},
-            {name:"意欲低下", val:-40, aro:-60, type:"other"},
-            {name:"感情の起伏", val:-10, aro:45, type:"emotional"},
-            {name:"強迫症状の増強療法", val:-50, aro:60, type:"other"}
-        ]
-    },
-    paliperidone: {
-        name: "パリペリドン（インヴェガ）",
-        color: "#4C6EF5",
-        targets: [
-            {name:"持続的な幻聴", val:-60, aro:65, type:"other"},
-            {name:"独り言（空笑）", val:-55, aro:60, type:"other"},
-            {name:"思考途絶", val:-50, aro:35, type:"other"},
-            {name:"再発を繰り返す状態", val:-55, aro:20, type:"other"},
-            {name:"朝方の症状悪化", val:-50, aro:30, type:"other"},
-            {name:"社会的な引きこもり", val:-45, aro:-45, type:"other"},
-            {name:"セルフケアの低下", val:-40, aro:-40, type:"other"},
-            {name:"過度な猜疑心", val:-60, aro:45, type:"emotional"},
-            {name:"服薬不規則による不安定", val:-50, aro:40, type:"other"},
-            {name:"慢性の妄想状態", val:-65, aro:40, type:"other"}
-        ]
-    },
-    perospirone: {
-        name: "ペロスピロン（ルーラン）",
-        color: "#20C997",
-        targets: [
-            {name:"軽度の幻覚・妄想", val:-45, aro:45, type:"other"},
-            {name:"全般的な不安感", val:-50, aro:40, type:"emotional"},
-            {name:"気分の落ち込み", val:-60, aro:-30, type:"emotional"},
-            {name:"思考のまとまりのなさ", val:-40, aro:30, type:"other"},
-            {name:"社会的回避", val:-40, aro:-35, type:"other"},
-            {name:"緊張感", val:-35, aro:60, type:"emotional"},
-            {name:"恐怖心", val:-55, aro:65, type:"emotional"},
-            {name:"感情の不安定", val:-25, aro:50, type:"emotional"},
-            {name:"認知機能の軽度低下", val:-30, aro:-10, type:"other"},
-            {name:"副作用を抑えたい維持期", val:5, aro:-5, type:"other"}
-        ]
-    },
-    blonanserin: {
-        name: "ブロナンセリン（ロナセン）",
-        color: "#FF922B",
-        targets: [
-            {name:"頑固な陽性症状", val:-60, aro:65, type:"other"},
-            {name:"日中の眠気を避けたい状態", val:-10, aro:10, type:"other"},
-            {name:"代謝系への懸念", val:-20, aro:0, type:"other"},
-            {name:"意欲減退", val:-40, aro:-55, type:"other"},
-            {name:"認知機能低下", val:-35, aro:-15, type:"other"},
-            {name:"社会的活動の維持", val:10, aro:15, type:"other"},
-            {name:"感情の平板化", val:-30, aro:-25, type:"other"},
-            {name:"思考スピードの低下", val:-25, aro:-20, type:"other"},
-            {name:"口渇・便秘の回避", val:-10, aro:-5, type:"other"},
-            {name:"集中力不足", val:-30, aro:10, type:"other"}
-        ]
-    },
-    lurasidone: {
-        name: "ルラシドン（ラツーダ）",
-        color: "#12B886",
-        targets: [
-            {name:"双極性障害のうつ状態", val:-70, aro:-25, type:"emotional"},
-            {name:"抑うつを伴う統合失調症", val:-70, aro:-15, type:"emotional"},
-            {name:"判断力・記憶力低下", val:-35, aro:-10, type:"other"},
-            {name:"体重増加の回避", val:5, aro:0, type:"other"},
-            {name:"無為・無関心", val:-45, aro:-50, type:"other"},
-            {name:"睡眠の質の改善", val:30, aro:-30, type:"other"},
-            {name:"対人不安", val:-50, aro:40, type:"emotional"},
-            {name:"被害的な気分", val:-60, aro:45, type:"emotional"},
-            {name:"集中力維持", val:10, aro:15, type:"other"},
-            {name:"代謝異常がある場合の切替", val:5, aro:0, type:"other"}
+            {name:"感情の極端な高揚（躁状態）", val:70, aro:85, type:"emotional"},
+            {name:"抑えきれないイライラ（易刺激性）", val:-60, aro:70, type:"emotional"},
+            {name:"何もやる気が起きない「無為」", val:-45, aro:-60, type:"other"},
+            {name:"感情の起伏が激しい不安定さ", val:-20, aro:60, type:"emotional"},
+            {name:"周囲への攻撃的な衝動", val:-70, aro:80, type:"emotional"},
+            {name:"物事への無関心", val:-40, aro:-40, type:"other"},
+            {name:"思考がまとまらない焦り", val:-50, aro:55, type:"other"},
+            {name:"緊張によるソワソワ感（焦燥）", val:-55, aro:65, type:"emotional"},
+            {name:"喜びを感じにくい状態（アンヘドニア）", val:-70, aro:-20, type:"emotional"},
+            {name:"集中力が続かない散漫さ", val:-35, aro:20, type:"other"}
         ]
     },
     olanzapine: {
         name: "オランザピン（ジプレキサ）",
         color: "#F08C00",
         targets: [
-            {name:"激しい躁状態", val:70, aro:80, type:"emotional"},
-            {name:"双極性の重いうつ", val:-80, aro:-20, type:"emotional"},
-            {name:"化学療法の吐き気", val:-50, aro:40, type:"other"},
-            {name:"深刻な食欲不振", val:-55, aro:-40, type:"other"},
-            {name:"重度の不眠", val:-50, aro:70, type:"other"},
-            {name:"周囲への警戒心", val:-55, aro:55, type:"emotional"},
-            {name:"強い焦燥感", val:-60, aro:65, type:"emotional"},
-            {name:"感情の枯渇", val:-45, aro:-30, type:"other"},
-            {name:"難治性うつ", val:-80, aro:-15, type:"emotional"},
-            {name:"思考の著しい解体", val:-70, aro:50, type:"other"}
+            {name:"激しい興奮と怒り", val:-70, aro:85, type:"emotional"},
+            {name:"恐怖を伴う強い被害妄想", val:-75, aro:70, type:"other"},
+            {name:"制御不能な多弁・多動", val:-20, aro:85, type:"other"},
+            {name:"深刻な絶望感（うつ状態）", val:-85, aro:-25, type:"emotional"},
+            {name:"神経過敏な過覚醒", val:-50, aro:80, type:"emotional"},
+            {name:"思考がバラバラになる混乱", val:-60, aro:60, type:"other"},
+            {name:"強い不安によるパニック", val:-70, aro:75, type:"emotional"},
+            {name:"激しい焦燥感（居ても立っても居られない）", val:-65, aro:80, type:"emotional"},
+            {name:"感情の深刻な枯渇", val:-60, aro:-25, type:"other"},
+            {name:"睡眠を妨げるほどの強い緊張", val:-55, aro:70, type:"emotional"}
         ]
     },
     quetiapine: {
-        name: "クエチアピン（セロクエル／ビプレッソ）",
+        name: "クエチアピン（セロクエル・ビプレッソ）",
         color: "#FCC419",
         targets: [
-            {name:"双極性障害のうつ", val:-70, aro:-25, type:"emotional"},
-            {name:"興奮・不穏", val:-50, aro:70, type:"emotional"},
-            {name:"寝付きの悪さ", val:-40, aro:65, type:"other"},
-            {name:"気分の波", val:-30, aro:45, type:"emotional"},
-            {name:"せん妄", val:-55, aro:70, type:"other"},
-            {name:"希死念慮", val:-85, aro:-15, type:"highrisk"},
-            {name:"過度な自責感", val:-80, aro:20, type:"emotional"},
-            {name:"衝動的行動", val:-55, aro:75, type:"emotional"},
-            {name:"抗うつ薬が使えないうつ", val:-70, aro:-15, type:"emotional"},
-            {name:"夜間の精神症状", val:-60, aro:55, type:"other"}
+            {name:"漠然とした強い不安感", val:-55, aro:45, type:"emotional"},
+            {name:"死にたいほどの苦痛（希死念慮）", val:-90, aro:-10, type:"highrisk"},
+            {name:"悲しみと焦りが混ざった混合状態", val:-70, aro:40, type:"emotional"},
+            {name:"外部刺激への過剰な反応", val:-50, aro:70, type:"emotional"},
+            {name:"感情の爆発的な噴出", val:-40, aro:80, type:"emotional"},
+            {name:"夜間の不穏・混乱（せん妄）", val:-60, aro:70, type:"other"},
+            {name:"自責の念（自分を責める感情）", val:-80, aro:20, type:"emotional"},
+            {name:"孤独感や虚無感", val:-70, aro:-30, type:"emotional"},
+            {name:"緊張からくる心身のこわばり", val:-50, aro:55, type:"other"},
+            {name:"安静にできない焦燥感", val:-60, aro:70, type:"emotional"}
+        ]
+    },
+    risperidone: {
+        name: "リスペリドン（リスパダール）",
+        color: "#FF6B6B",
+        targets: [
+            {name:"幻聴に対する恐怖と怒り", val:-75, aro:75, type:"emotional"},
+            {name:"強い猜疑心（疑い深く攻撃的）", val:-70, aro:65, type:"emotional"},
+            {name:"衝動的な自傷・他害の感情", val:-85, aro:80, type:"highrisk"},
+            {name:"精神運動性の高い興奮", val:-45, aro:85, type:"emotional"},
+            {name:"感情の制御不能な乱れ", val:-60, aro:75, type:"emotional"},
+            {name:"思考の解体による不安", val:-60, aro:55, type:"other"},
+            {name:"周囲への強い敵意", val:-75, aro:70, type:"emotional"},
+            {name:"外部からの刺激に対する過敏さ", val:-55, aro:65, type:"other"},
+            {name:"慢性的で根深い妄想的な緊張", val:-65, aro:50, type:"other"},
+            {name:"情動が不安定なパニック状態", val:-70, aro:80, type:"emotional"}
+        ]
+    },
+    paliperidone: {
+        name: "パリペリドン（インヴェガ）",
+        color: "#4C6EF5",
+        targets: [
+            {name:"妄想に基づいた持続的な緊張", val:-65, aro:55, type:"other"},
+            {name:"予測できない感情の変動", val:-30, aro:55, type:"emotional"},
+            {name:"社会的な交流への強い忌避感", val:-55, aro:-35, type:"other"},
+            {name:"感情の平板化（無感動）", val:-40, aro:-25, type:"other"},
+            {name:"意欲が完全に失われた状態", val:-50, aro:-55, type:"other"},
+            {name:"思考の停止感（頭が働かない）", val:-45, aro:-20, type:"other"},
+            {name:"慢性的な不信感", val:-60, aro:30, type:"emotional"},
+            {name:"独り言や空笑に伴う内面的な混乱", val:-50, aro:45, type:"other"},
+            {name:"自助能力が低下した際の無力感", val:-55, aro:-30, type:"emotional"},
+            {name:"24時間持続する神経過敏", val:-55, aro:60, type:"emotional"}
+        ]
+    },
+    brexpiprazole: {
+        name: "ブレクスピプラゾール（レキサルティ）",
+        color: "#20C997",
+        targets: [
+            {name:"感情の動きが乏しい状態", val:-35, aro:-25, type:"other"},
+            {name:"最初の一歩が出ない「意欲の枯渇」", val:-45, aro:-40, type:"other"},
+            {name:"対人場面での強い回避感情", val:-50, aro:15, type:"emotional"},
+            {name:"漠然とした将来への不安", val:-55, aro:35, type:"emotional"},
+            {name:"思考スピードの停滞（頭の回転の悪さ）", val:-35, aro:-10, type:"other"},
+            {name:"喜びを見いだせない虚しさ", val:-65, aro:-20, type:"emotional"},
+            {name:"集中力の欠如による情けなさ", val:-50, aro:10, type:"emotional"},
+            {name:"自分の感情がわからない戸惑い", val:-45, aro:5, type:"emotional"},
+            {name:"社会的な役割への適応不安", val:-50, aro:25, type:"emotional"},
+            {name:"軽度のイライラや不機嫌", val:-30, aro:35, type:"emotional"}
+        ]
+    },
+    lurasidone: {
+        name: "ルラシドン（ラツーダ）",
+        color: "#12B886",
+        targets: [
+            {name:"深い抑うつと悲しみ", val:-80, aro:-25, type:"emotional"},
+            {name:"何にも意味を感じられない絶望", val:-85, aro:-20, type:"emotional"},
+            {name:"判断力が低下した際の焦り", val:-55, aro:40, type:"emotional"},
+            {name:"社会的な孤立感と疎外感", val:-60, aro:-30, type:"emotional"},
+            {name:"喜びを喪失したアンヘドニア", val:-75, aro:-20, type:"emotional"},
+            {name:"自分を無価値だと思う感情", val:-80, aro:-10, type:"emotional"},
+            {name:"思考が停滞したことへの不全感", val:-55, aro:5, type:"emotional"},
+            {name:"悲観的な未来への恐怖", val:-70, aro:35, type:"emotional"},
+            {name:"意思決定ができない苦痛", val:-60, aro:20, type:"emotional"},
+            {name:"軽度の被害的な思考", val:-45, aro:25, type:"emotional"}
+        ]
+    },
+    blonanserin: {
+        name: "ブロナンセリン（ロナセン）",
+        color: "#FF922B",
+        targets: [
+            {name:"幻聴や妄想への強い囚われ", val:-65, aro:50, type:"other"},
+            {name:"社会活動に対する意欲の減退", val:-45, aro:-40, type:"other"},
+            {name:"認知機能の低下による自信喪失", val:-50, aro:-10, type:"emotional"},
+            {name:"感情の起伏がなくなった平板化", val:-40, aro:-25, type:"other"},
+            {name:"思考が遅れることによる対人不安", val:-45, aro:20, type:"emotional"},
+            {name:"外部との接触を避ける閉塞感", val:-55, aro:-20, type:"emotional"},
+            {name:"意識の鮮明さが欠けたボーッとした状態", val:-30, aro:-35, type:"other"},
+            {name:"活動性の低下した「無為」", val:-45, aro:-50, type:"other"},
+            {name:"注意力の欠如による不安", val:-45, aro:25, type:"emotional"},
+            {name:"妄想による継続的な警戒心", val:-60, aro:45, type:"emotional"}
+        ]
+    },
+    perospirone: {
+        name: "ペロスピロン（ルーラン）",
+        color: "#51CF66",
+        targets: [
+            {name:"身体的な緊張を伴う不安", val:-55, aro:50, type:"emotional"},
+            {name:"些細なことに驚く過敏症", val:-40, aro:60, type:"emotional"},
+            {name:"軽度の抑うつ気分", val:-45, aro:-15, type:"emotional"},
+            {name:"対人場面での恐怖心", val:-60, aro:40, type:"emotional"},
+            {name:"同じことを考え続ける反芻（ループ）", val:-50, aro:25, type:"other"},
+            {name:"軽度の被害的妄想", val:-45, aro:35, type:"other"},
+            {name:"落ち着かないソワソワ感", val:-45, aro:55, type:"emotional"},
+            {name:"社会的な交流への不安", val:-50, aro:20, type:"emotional"},
+            {name:"神経過敏による睡眠への恐怖", val:-55, aro:45, type:"emotional"},
+            {name:"感情の微細な乱れ", val:-25, aro:25, type:"emotional"}
         ]
     },
     asenapine: {
         name: "アセナピン（シクレスト）",
         color: "#9775FA",
         targets: [
-            {name:"急性期の躁状態", val:70, aro:80, type:"emotional"},
-            {name:"急な幻覚・妄想", val:-60, aro:75, type:"other"},
-            {name:"嚥下困難な方の投薬", val:-10, aro:0, type:"other"},
-            {name:"即効性を要する鎮静", val:-10, aro:70, type:"other"},
-            {name:"攻撃性の高まり", val:-65, aro:80, type:"emotional"},
-            {name:"睡眠障害", val:-45, aro:60, type:"other"},
-            {name:"激しい焦燥感", val:-60, aro:75, type:"emotional"},
-            {name:"服薬確認の徹底", val:0, aro:10, type:"other"},
-            {name:"既存薬の効果不十分", val:-45, aro:35, type:"other"},
-            {name:"多動状態", val:-30, aro:80, type:"other"}
+            {name:"躁状態による急激な興奮", val:75, aro:85, type:"emotional"},
+            {name:"制御できない多弁と高揚", val:65, aro:80, type:"emotional"},
+            {name:"攻撃的な衝動・言動", val:-70, aro:80, type:"emotional"},
+            {name:"幻聴への即時的な恐怖反応", val:-75, aro:75, type:"emotional"},
+            {name:"激しい情緒の不安定", val:-40, aro:70, type:"emotional"},
+            {name:"焦りによる混乱状態", val:-55, aro:70, type:"emotional"},
+            {name:"破壊的なエネルギーの放出", val:-60, aro:85, type:"highrisk"},
+            {name:"外部環境への強い警戒と敵意", val:-70, aro:65, type:"emotional"},
+            {name:"思考が走りすぎる焦燥感", val:-55, aro:80, type:"emotional"},
+            {name:"衝動性を伴う不安", val:-60, aro:75, type:"emotional"}
         ]
     },
     clozapine: {
         name: "クロザピン（クロザリル）",
         color: "#E64980",
         targets: [
-            {name:"他剤無効の難治例", val:-70, aro:20, type:"other"},
-            {name:"繰り返す自殺企図", val:-90, aro:-10, type:"highrisk"},
-            {name:"強い暴力行為", val:-75, aro:85, type:"highrisk"},
-            {name:"深刻な錐体外路症状", val:-60, aro:50, type:"other"},
-            {name:"強固な妄想", val:-70, aro:45, type:"other"},
-            {name:"生活を阻害する幻聴", val:-65, aro:60, type:"other"},
-            {name:"重度の社会的ひきこもり", val:-55, aro:-45, type:"other"},
-            {name:"多飲水", val:-30, aro:30, type:"other"},
-            {name:"長期入院例の改善", val:-20, aro:10, type:"other"},
-            {name:"QOLの根本的向上", val:40, aro:5, type:"other"}
-        ]
-    },
-    aripiprazole: {
-        name: "アリピプラゾール（エビリファイ）",
-        color: "#15AABF",
-        targets: [
-            {name:"幻覚・妄想", val:-60, aro:55, type:"other"},
-            {name:"躁状態の高揚感", val:65, aro:80, type:"emotional"},
-            {name:"多弁・多動", val:-10, aro:80, type:"other"},
-            {name:"うつ病の増強療法", val:-60, aro:-15, type:"emotional"},
-            {name:"イライラ・攻撃性", val:-60, aro:65, type:"emotional"},
-            {name:"自閉症の易刺激性", val:-40, aro:60, type:"other"},
-            {name:"意欲低下", val:-35, aro:-45, type:"other"},
-            {name:"感情の平板化", val:-30, aro:-25, type:"other"},
-            {name:"チック障害", val:-35, aro:55, type:"other"},
-            {name:"副作用を最小限にしたい管理", val:10, aro:0, type:"other"}
-        ]
-    },
-    zotepine: {
-        name: "ゾテピン（ロドピン）",
-        color: "#E8590C",
-        targets: [
-            {name:"強い精神運動興奮", val:-40, aro:85, type:"emotional"},
-            {name:"激しい攻撃性", val:-70, aro:85, type:"emotional"},
-            {name:"深刻な不眠", val:-50, aro:70, type:"other"},
-            {name:"難治性の陽性症状", val:-60, aro:60, type:"other"},
-            {name:"躁状態の激越", val:70, aro:85, type:"emotional"},
-            {name:"強い不安・緊張", val:-55, aro:65, type:"emotional"},
-            {name:"居ても立っても居られない焦燥", val:-60, aro:75, type:"emotional"},
-            {name:"感情の噴出", val:-20, aro:75, type:"emotional"},
-            {name:"定型薬からの移行", val:-15, aro:10, type:"other"},
-            {name:"強力な鎮静の必要性", val:-20, aro:70, type:"other"}
+            {name:"他の薬で消えない強固な絶望", val:-90, aro:-15, type:"emotional"},
+            {name:"制御不能な激しい暴力性", val:-85, aro:85, type:"highrisk"},
+            {name:"繰り返される強い自殺念慮", val:-95, aro:-5, type:"highrisk"},
+            {name:"深刻な感情の荒廃（冷淡さ）", val:-70, aro:-10, type:"emotional"},
+            {name:"生活を阻害する異常な衝動（多飲水など）", val:-55, aro:45, type:"other"},
+            {name:"治療に対する諦めや無力感", val:-70, aro:-20, type:"emotional"},
+            {name:"激しく持続する焦燥感", val:-65, aro:70, type:"emotional"},
+            {name:"世界への強い不信と敵意", val:-80, aro:55, type:"emotional"},
+            {name:"深刻な社会的引きこもり", val:-60, aro:-35, type:"other"},
+            {name:"既存薬では制御できない精神的混乱", val:-65, aro:60, type:"other"}
         ]
     }
 };
@@ -489,7 +486,7 @@ function renderBackground(){
     });
 }
 
-// ▼ 症状ピンを追加（円内）
+// ▼ ピンを追加（円内）
 function addSymptomPin(symptom, color, delay = 0) {
     setTimeout(() => {
         const map = document.getElementById("emotion-map");
@@ -547,17 +544,16 @@ function showDrugTargets(evt, drugKey) {
         evt.target.classList.add('active');
     }
 
-    // ピンをクリア
     clearPins();
     
     const infoBox = document.getElementById('info-box');
     
     if (drugKey === 'clear') {
         infoBox.innerHTML = `
-            薬剤を選択すると、その薬が主にターゲットとする状態が感情円環上にマッピングされます。<br>
+            薬剤を選択すると、その薬が主にアプローチする「情動の状態」が感情円環上にマッピングされます。<br>
             <div class="legend">
                 <span class="leg-emotional">● 情動トーンに近い状態（円内ピン）</span><br>
-                <span class="leg-other">■ 認知・行動・生理・持続性などの状態（情動トーンの一例として円内に表示）</span><br>
+                <span class="leg-other">■ 認知・行動・持続性などを含む状態（情動トーンの一例として円内に表示）</span><br>
                 <span class="leg-high">⚠ 高リスク状態（Valence×Arousalで単純に表せないため円外に表示）</span>
             </div>
             <div style="margin-top:6px; font-size:11px; color:#888;">
@@ -570,10 +566,10 @@ function showDrugTargets(evt, drugKey) {
     const drug = drugTargets[drugKey];
     if (drug) {
         infoBox.innerHTML = `
-            <strong>${drug.name}</strong> が主にターゲットとする状態を表示中<br>
+            <strong>${drug.name}</strong> が主にアプローチする情動の状態を表示中<br>
             <div class="legend">
                 <span class="leg-emotional">● 情動トーンに近い状態（円内ピン）</span><br>
-                <span class="leg-other">■ 認知・行動・生理・持続性などの状態（情動トーンの一例として円内に表示）</span><br>
+                <span class="leg-other">■ 認知・行動・持続性などを含む状態（情動トーンの一例として円内に表示）</span><br>
                 <span class="leg-high">⚠ 高リスク状態（Valence×Arousalで単純に表せないため円外に表示）</span>
             </div>
             <div style="margin-top:6px; font-size:11px; color:#888;">
